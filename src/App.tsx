@@ -29,7 +29,7 @@ fakeBackend();
 // // init firebase backend
 // initFirebaseBackend(firebaseConfig);
 
-import "axiosconfig";
+
 
 function App() {
   return (
