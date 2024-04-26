@@ -108,7 +108,7 @@ const RecomendedJobs = () => {
                 "Job Type",
               ]}
               sort={true}
-              pagination={{ enabled: true, limit: 5 }}
+              // pagination={{ enabled: true, limit: 5 }}
             />
           </CardBody>
         </Card>

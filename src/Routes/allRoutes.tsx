@@ -50,6 +50,8 @@ import CrmLeads from "../pages/Crm/CrmLeads/index";
 import InvoiceList from "../pages/Invoices/InvoiceList";
 import InvoiceCreate from "../pages/Invoices/InvoiceCreate";
 import InvoiceDetails from "../pages/Invoices/InvoiceDetails";
+import List from "../pages/Invoices/List";
+// import Details from "../pages/Invoices/Details";
 
 // // Support Tickets
 import ListView from '../pages/SupportTickets/ListView';
@@ -300,6 +302,8 @@ const authProtectedRoutes = [
   { path: "/apps-invoices-list", component: <InvoiceList /> },
   { path: "/apps-invoices-details", component: <InvoiceDetails /> },
   { path: "/apps-invoices-create", component: <InvoiceCreate /> },
+  { path: "/apps-invoices-list1", component: <List /> },
+ 
 
   // //Supports Tickets
   { path: "/apps-tickets-list", component: <ListView /> },

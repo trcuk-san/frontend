@@ -29,6 +29,11 @@ fakeBackend();
 // // init firebase backend
 // initFirebaseBackend(firebaseConfig);
 
+<<<<<<< Updated upstream
+=======
+
+
+>>>>>>> Stashed changes
 function App() {
   return (
     <React.Fragment>

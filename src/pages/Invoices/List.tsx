@@ -38,7 +38,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { createSelector } from "reselect";
 
-const InvoiceList = () => {
+const List = () => {
   const dispatch: any = useDispatch();
 
   const selectLayoutState = (state: any) => state.Invoice;
@@ -405,4 +405,4 @@ const InvoiceList = () => {
   );
 };
 
-export default InvoiceList;
+export default List;
