@@ -47,10 +47,10 @@ import CrmDeals from "../pages/Crm/CrmDeals/index";
 import CrmLeads from "../pages/Crm/CrmLeads/index";
 
 // //Invoices
-import InvoiceList from "../pages/Invoices/InvoiceList";
+import InvoiceList from "../pages/Invoices/List";
 import InvoiceCreate from "../pages/Invoices/InvoiceCreate";
 import InvoiceDetails from "../pages/Invoices/InvoiceDetails";
-import List from "../pages/Invoices/InvoiceList";
+// import List from "../pages/Invoices/List";
 // import Details from "../pages/Invoices/Details";
 
 // // Support Tickets
@@ -314,7 +314,7 @@ const authProtectedRoutes = [
   { path: "/apps-invoices-list", component: <InvoiceList /> },
   { path: "/apps-invoices-details", component: <InvoiceDetails /> },
   { path: "/apps-invoices-create", component: <InvoiceCreate /> },
-  { path: "/apps-invoices-list1", component: <List /> },
+  // { path: "/apps-invoices-list1", component: <List /> },
 
   // //Supports Tickets
   { path: "/apps-tickets-list", component: <ListView /> },
@@ -503,7 +503,7 @@ const publicRoutes = [
   { path: "/auth-offline", component: <Offlinepage /> },
 
   { path: "/pages-maintenance", component: <Maintenance /> },
-  { path: "/pages-coming-soon", component: <ComingSoon /> },
+  { path: "/pages-co  ming-soon", component: <ComingSoon /> },
 
   // { path: "/testtest", component: <Testaxios /> },
 ];
