@@ -47,10 +47,10 @@ import CrmDeals from "../pages/Crm/CrmDeals/index";
 import CrmLeads from "../pages/Crm/CrmLeads/index";
 
 // //Invoices
-import InvoiceList from "../pages/Invoices/InvoiceList";
+import InvoiceList from "../pages/Invoices/List";
 import InvoiceCreate from "../pages/Invoices/InvoiceCreate";
 import InvoiceDetails from "../pages/Invoices/InvoiceDetails";
-import List from "../pages/Invoices/List";
+// import List from "../pages/Invoices/List";
 // import Details from "../pages/Invoices/Details";
 
 // // Support Tickets
@@ -243,9 +243,7 @@ import ToDoList from "../pages/ToDo";
 import UiLink from "../pages/BaseUi/UiLinks/UiLinks";
 import Kanbanboard from "pages/Tasks/KanbanBoard";
 
-
-import Testaxios from "../pages/Test/Testaxios";
-
+// import Testaxios from "../pages/Test/Testaxios";
 
 const authProtectedRoutes = [
   { path: "/dashboard-analytics", component: <DashboardAnalytics /> },
@@ -316,7 +314,7 @@ const authProtectedRoutes = [
   { path: "/apps-invoices-list", component: <InvoiceList /> },
   { path: "/apps-invoices-details", component: <InvoiceDetails /> },
   { path: "/apps-invoices-create", component: <InvoiceCreate /> },
-  { path: "/apps-invoices-list1", component: <List /> },
+  // { path: "/apps-invoices-list1", component: <List /> },
  
 
   // //Supports Tickets
@@ -506,11 +504,9 @@ const publicRoutes = [
   { path: "/auth-offline", component: <Offlinepage /> },
 
   { path: "/pages-maintenance", component: <Maintenance /> },
-  { path: "/pages-coming-soon", component: <ComingSoon /> },
+  { path: "/pages-co  ming-soon", component: <ComingSoon /> },
 
-
-
-  { path: "/testtest", component: <Testaxios /> },
+  // { path: "/testtest", component: <Testaxios /> },
 ];
 
 export { authProtectedRoutes, publicRoutes };
