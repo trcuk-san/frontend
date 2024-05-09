@@ -243,7 +243,9 @@ import ToDoList from "../pages/ToDo";
 import UiLink from "../pages/BaseUi/UiLinks/UiLinks";
 import Kanbanboard from "pages/Tasks/KanbanBoard";
 
+
 import Testaxios from "../pages/Test/Testaxios";
+
 
 const authProtectedRoutes = [
   { path: "/dashboard-analytics", component: <DashboardAnalytics /> },
@@ -505,6 +507,8 @@ const publicRoutes = [
 
   { path: "/pages-maintenance", component: <Maintenance /> },
   { path: "/pages-coming-soon", component: <ComingSoon /> },
+
+
 
   { path: "/testtest", component: <Testaxios /> },
 ];
