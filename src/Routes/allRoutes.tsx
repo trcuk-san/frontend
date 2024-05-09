@@ -243,6 +243,10 @@ import ToDoList from "../pages/ToDo";
 import UiLink from "../pages/BaseUi/UiLinks/UiLinks";
 import Kanbanboard from "pages/Tasks/KanbanBoard";
 
+<<<<<<< Updated upstream
+=======
+// import Testaxios from "../pages/Test/Testaxios";
+>>>>>>> Stashed changes
 
 const authProtectedRoutes = [
   { path: "/dashboard-analytics", component: <DashboardAnalytics /> },
@@ -496,6 +500,10 @@ const publicRoutes = [
   { path: "/pages-maintenance", component: <Maintenance /> },
   { path: "/pages-coming-soon", component: <ComingSoon /> },
 
+<<<<<<< Updated upstream
+=======
+  // { path: "/testtest", component: <Testaxios /> },
+>>>>>>> Stashed changes
 ];
 
 export { authProtectedRoutes, publicRoutes };
