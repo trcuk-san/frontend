@@ -322,8 +322,7 @@ const authProtectedRoutes = [
   { path: "/invoices1", component: <Invoices1 /> },
   { path: "/apps-invoices-details", component: <InvoiceDetails /> },
   { path: "/apps-invoices-create", component: <InvoiceCreate /> },
-  
- 
+  // { path: "/apps-invoices-list1", component: <List /> },
 
   // //Supports Tickets
   { path: "/apps-tickets-list", component: <ListView /> },
