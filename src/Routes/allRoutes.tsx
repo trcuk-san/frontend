@@ -47,7 +47,11 @@ import CrmDeals from "../pages/Crm/CrmDeals/index";
 import CrmLeads from "../pages/Crm/CrmLeads/index";
 
 // //Invoices
-import InvoiceList from "../pages/Invoices/List";
+import Order from "../pages/Invoices/List";
+import Car from "../pages/Invoices/List1";
+import Member from "../pages/Invoices/List2";
+import Invoices1 from "../pages/Invoices/List4";
+import Invoices from "../pages/Invoices/List3";
 import InvoiceCreate from "../pages/Invoices/InvoiceCreate";
 import InvoiceDetails from "../pages/Invoices/InvoiceDetails";
 // import List from "../pages/Invoices/List";
@@ -311,10 +315,14 @@ const authProtectedRoutes = [
   { path: "/apps-crm-leads", component: <CrmLeads /> },
 
   // //Invoices
-  { path: "/apps-invoices-list", component: <InvoiceList /> },
+  { path: "/order", component: <Order /> },
+  { path: "/car", component: <Car /> },
+  { path: "/member", component: <Member /> },
+  { path: "/invoices", component: <Invoices /> },
+  { path: "/invoices1", component: <Invoices1 /> },
   { path: "/apps-invoices-details", component: <InvoiceDetails /> },
   { path: "/apps-invoices-create", component: <InvoiceCreate /> },
-  // { path: "/apps-invoices-list1", component: <List /> },
+  
  
 
   // //Supports Tickets
