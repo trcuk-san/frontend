@@ -8,20 +8,13 @@ import logoDark from "../assets/images/logo-dark.png";
 import logoLight from "../assets/images/logo-light.png";
 
 //import Components
-import SearchOption from '../Components/Common/SearchOption';
-import LanguageDropdown from '../Components/Common/LanguageDropdown';
-import WebAppsDropdown from '../Components/Common/WebAppsDropdown';
-import MyCartDropdown from '../Components/Common/MyCartDropdown';
-import FullScreenDropdown from '../Components/Common/FullScreenDropdown';
-import NotificationDropdown from '../Components/Common/NotificationDropdown';
 import ProfileDropdown from '../Components/Common/ProfileDropdown';
-import LightDark from '../Components/Common/LightDark';
 
 import { changeSidebarVisibility } from '../slices/thunks';
 import { useSelector, useDispatch } from "react-redux";
 import { createSelector } from 'reselect';
 
-const Header = ({ onChangeLayoutMode, layoutModeType, headerClass } : any) => {
+const Header = ({  headerClass } : any) => {
     const dispatch : any = useDispatch();
 
 
@@ -110,9 +103,7 @@ const Header = ({ onChangeLayoutMode, layoutModeType, headerClass } : any) => {
                                     <span></span>
                                 </span>
                             </button>
-
-
-                            <SearchOption />
+                            {/* <SearchOption /> */}
                         </div>
 
                         <div className="d-flex align-items-center">
@@ -134,28 +125,6 @@ const Header = ({ onChangeLayoutMode, layoutModeType, headerClass } : any) => {
                                     </Form>
                                 </DropdownMenu>
                             </Dropdown>
-
-                            {/* LanguageDropdown */}
-                            <LanguageDropdown />
-
-                            {/* WebAppsDropdown */}
-                            <WebAppsDropdown />
-
-                            {/* MyCartDropdwon */}
-                            <MyCartDropdown />
-
-                            {/* FullScreenDropdown */}
-                            <FullScreenDropdown />
-
-                            {/* Dark/Light Mode set */}
-                            <LightDark
-                                layoutMode={layoutModeType}
-                                onChangeLayoutMode={onChangeLayoutMode}
-                            />
-
-                            {/* NotificationDropdown */}
-                            <NotificationDropdown />
-
                             {/* ProfileDropdown */}
                             <ProfileDropdown />
                         </div>

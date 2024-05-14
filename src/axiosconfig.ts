@@ -1,6 +1,6 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
-const API_URL = "http://10.7.249.187:4000";
+const API_URL = "http://10.63.201.92:4000";
 axios.defaults.baseURL = API_URL;
 
 const onRequest = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
