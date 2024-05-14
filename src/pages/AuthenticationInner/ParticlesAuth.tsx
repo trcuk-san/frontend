@@ -1,4 +1,4 @@
- import React from 'react';
+import React from 'react';
 import withRouter from '../../Components/Common/withRouter';
 
 const ParticlesAuth = ({ children }: any) => {
@@ -14,13 +14,11 @@ const ParticlesAuth = ({ children }: any) => {
                             <path d="M 0,36 C 144,53.6 432,123.2 720,124 C 1008,124.8 1296,56.8 1440,40L1440 140L0 140z"></path>
                         </svg>
                     </div>
-
-                    {/* pass the children */}
-                    {children}
-
                 </div>
 
-                <footer className="footer">
+                {children}
+
+                <footer className="footer start-0">
                     <div className="container">
                         <div className="row">
                             <div className="col-lg-12">

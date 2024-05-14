@@ -1,37 +1,46 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Card, CardBody, Col, Container, Input, Label, Row, Button, FormFeedback, Form } from 'reactstrap';
+import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button, Card, CardBody, Col, Container, Form, FormFeedback, Input, Label, Row } from 'reactstrap';
+import logoLight from '../../../assets/images/logo-light.png';
+import ParticlesAuth from '../ParticlesAuth';
 
-// Formik validation
-import * as Yup from "yup";
-import { useFormik } from "formik";
+interface FormState {
+    email: string;
+    password: string;
+}
 
-import ParticlesAuth from "../ParticlesAuth";
+interface ErrorState {
+    email?: string;
+    password?: string;
+}
 
-//import images
-import logoLight from "../../../assets/images/logo-light.png";
+const Login = () => {
+    const [passwordShow, setPasswordShow] = useState(false);
+    const [form, setForm] = useState<FormState>({ email: '', password: '' });
+    const [errors, setErrors] = useState<ErrorState>({});
+    const navigate = useNavigate();
 
-const BasicSignIn = () => {
-    document.title = "Basic SignIn | Velzon - React Admin & Dashboard Template";
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
 
-    const [passwordShow, setPasswordShow] = useState<boolean>(false);
-
-    const validation: any = useFormik({
-        // enableReinitialize : use this flag when initial values needs to be changed
-        enableReinitialize: true,
-
-        initialValues: {
-            userName: '',
-            password: '',
-        },
-        validationSchema: Yup.object({
-            userName: Yup.string().required("Please Enter Your Username"),
-            password: Yup.string().required("Please Enter Your Password"),
-        }),
-        onSubmit: (values) => {
-            console.log("values", values)
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post('/auth/login', form);
+            console.log('Login successful:', response.data);
+            localStorage.setItem('token', response.data.token);
+            navigate('/dashboard');
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                console.log('Error response:', error.response.data);
+                setErrors(error.response.data.errors || {});
+            } else {
+                console.error('Error message:', (error as Error).message);
+            }
         }
-    });
+    };
 
     return (
         <React.Fragment>
@@ -60,28 +69,22 @@ const BasicSignIn = () => {
                                             <p className="text-muted">Sign in to continue to Velzon.</p>
                                         </div>
                                         <div className="p-2 mt-4">
-                                            <Form
-                                                onSubmit={(e) => {
-                                                    e.preventDefault();
-                                                    validation.handleSubmit();
-                                                    return false;
-                                                }}
-                                                action="#">
-
+                                            <Form onSubmit={handleSubmit}>
                                                 <div className="mb-3">
-                                                    <Label htmlFor="username" className="form-label">Username</Label>
-                                                    <Input type="text" className="form-control" id="username" placeholder="Enter username"
-                                                        name="userName"
-                                                        onChange={validation.handleChange}
-                                                        onBlur={validation.handleBlur}
-                                                        value={validation.values.userName || ""}
-                                                        invalid={
-                                                            validation.touched.userName && validation.errors.userName ? true : false
-                                                        }
+                                                    <Label htmlFor="email" className="form-label">Email</Label>
+                                                    <Input
+                                                        type="email"
+                                                        className="form-control"
+                                                        id="email"
+                                                        placeholder="Enter email"
+                                                        name="email"
+                                                        value={form.email}
+                                                        onChange={handleChange}
+                                                        invalid={!!errors.email}
                                                     />
-                                                    {validation.touched.userName && validation.errors.userName ? (
-                                                        <FormFeedback type="invalid">{validation.errors.userName}</FormFeedback>
-                                                    ) : null}
+                                                    {errors.email && (
+                                                        <FormFeedback type="invalid">{errors.email}</FormFeedback>
+                                                    )}
                                                 </div>
 
                                                 <div className="mb-3">
@@ -90,20 +93,27 @@ const BasicSignIn = () => {
                                                     </div>
                                                     <Label className="form-label" htmlFor="password-input">Password</Label>
                                                     <div className="position-relative auth-pass-inputgroup mb-3">
-                                                        <Input type={passwordShow ? "text" : "password"} className="form-control pe-5 password-input" placeholder="Enter password" id="password-input"
+                                                        <Input
+                                                            type={passwordShow ? "text" : "password"}
+                                                            className="form-control pe-5 password-input"
+                                                            placeholder="Enter password"
+                                                            id="password-input"
                                                             name="password"
-                                                            value={validation.values.password || ""}
-                                                            onChange={validation.handleChange}
-                                                            onBlur={validation.handleBlur}
-                                                            invalid={
-                                                                validation.touched.password && validation.errors.password ? true : false
-                                                            }
+                                                            value={form.password}
+                                                            onChange={handleChange}
+                                                            invalid={!!errors.password}
                                                         />
-                                                        {validation.touched.password && validation.errors.password ? (
-                                                            <FormFeedback type="invalid">{validation.errors.password}</FormFeedback>
-                                                        ) : null}
+                                                        {errors.password && (
+                                                            <FormFeedback type="invalid">{errors.password}</FormFeedback>
+                                                        )}
 
-                                                        <button className="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" id="password-addon" onClick={() => setPasswordShow(!passwordShow)}><i className="ri-eye-fill align-middle"></i></button>
+                                                        <button
+                                                            className="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
+                                                            type="button"
+                                                            id="password-addon"
+                                                            onClick={() => setPasswordShow(!passwordShow)}>
+                                                            <i className="ri-eye-fill align-middle"></i>
+                                                        </button>
                                                     </div>
                                                 </div>
 
@@ -135,7 +145,6 @@ const BasicSignIn = () => {
                                 <div className="mt-4 text-center">
                                     <p className="mb-0">Don't have an account ? <Link to="/auth-signup-basic" className="fw-semibold text-primary text-decoration-underline"> Signup </Link> </p>
                                 </div>
-
                             </Col>
                         </Row>
                     </Container>
@@ -145,4 +154,4 @@ const BasicSignIn = () => {
     );
 };
 
-export default BasicSignIn;
+export default Login;
