@@ -25,7 +25,7 @@ const Create = () => {
 
     <div className="page-content">
       <Container fluid>
-        <BreadCrumb title="Orders" pageTitle="Pages" />
+        <BreadCrumb title="Create" pageTitle="Order List" />
         <Row>
           <Col md={5}>
             <div>

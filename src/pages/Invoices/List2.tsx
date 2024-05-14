@@ -38,7 +38,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { createSelector } from "reselect";
 
-const Order = () => {
+const Member = () => {
   const dispatch: any = useDispatch();
 
   const selectLayoutState = (state: any) => state.Invoice;
@@ -296,7 +296,7 @@ const Order = () => {
           onCloseClick={() => setDeleteModalMulti(false)}
         />
         <Container fluid>
-          <BreadCrumb title="Order List" pageTitle="Invoices" />
+          <BreadCrumb title="Member List" pageTitle="Member" />
           {/* <Row>
             {invoiceWidgets.map((invoicewidget, key) => (
               <React.Fragment key={key}>
@@ -405,4 +405,4 @@ const Order = () => {
   );
 };
 
-export default Order;
+export default Member;
