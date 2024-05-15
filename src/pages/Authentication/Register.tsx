@@ -35,6 +35,9 @@ const Register = () => {
     email: "",
     userName: "",
     password: "",
+    firstname: "",
+    lastname: "",
+    phone: ""
   };
 
   const validationSchema = Yup.object({

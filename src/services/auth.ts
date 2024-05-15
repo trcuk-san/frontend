@@ -14,7 +14,7 @@ interface ILogin {
 }
 
 export const register = async (body: IRegister) => {
-  const res = await axios.post('/auth/register', body);
+  const res = await axios.post('http://localhost:4000/auth/register', body);
   console.log('res register ', res);
   return res;
 };
