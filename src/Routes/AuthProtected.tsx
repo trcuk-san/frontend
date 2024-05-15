@@ -7,11 +7,13 @@ import { useProfile } from "../Components/Hooks/UserHooks";
 
 import { logoutUser } from "../slices/auth/login/thunk";
 
-const AuthProtected = (props : any) =>{
-  const dispatch : any = useDispatch();
+const AuthProtected = (props: any) => {
+  const dispatch: any = useDispatch();
   const { userProfile, loading, token } = useProfile();
-  
+
   useEffect(() => {
+    const x = localStorage.getItem("token");
+    console.log(x);
     if (userProfile && !loading && token) {
       setAuthorization(token);
     } else if (!userProfile && loading && !token) {
@@ -24,13 +26,10 @@ const AuthProtected = (props : any) =>{
     */
 
   if (!userProfile && loading && !token) {
-    return (
-      <Navigate to={{ pathname: "/login"}} />
-    );
+    return <Navigate to={{ pathname: "/login" }} />;
   }
 
   return <>{props.children}</>;
 };
-
 
 export default AuthProtected;
