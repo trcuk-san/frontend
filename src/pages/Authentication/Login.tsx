@@ -31,7 +31,18 @@ import logoLight from "../../assets/images/logo-light.png";
 import { createSelector } from "reselect";
 //import images
 
+import { test } from "services/auth";
+
 const Login = (props: any) => {
+  const handletest = async () => {
+    try {
+      const testResponse = await test();
+      console.log("testaxios OK", testResponse);
+    } catch (error) {
+      console.error("testaxios failed", error);
+    }
+  };
+
   const dispatch: any = useDispatch();
 
   const selectLayoutState = (state: any) => state;
@@ -267,6 +278,10 @@ const Login = (props: any) => {
               </Col>
             </Row>
           </Container>
+
+          <Button color="info" onClick={handletest}>
+            Info
+          </Button>
         </div>
       </ParticlesAuth>
     </React.Fragment>
