@@ -1,291 +1,158 @@
-import React, { useEffect, useState } from "react";
-import {
-  Card,
-  CardBody,
-  Col,
-  Container,
-  Input,
-  Label,
-  Row,
-  Button,
-  Form,
-  FormFeedback,
-  Alert,
-  Spinner,
-} from "reactstrap";
-import ParticlesAuth from "../AuthenticationInner/ParticlesAuth";
 
-//redux
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button, Card, CardBody, Col, Container, Form, FormFeedback, Input, Label, Row } from 'reactstrap';
+import logoLight from '../../assets/images/logo-light.png';
+import ParticlesAuth from '../AuthenticationInner/ParticlesAuth';
 
-import { Link } from "react-router-dom";
-import withRouter from "../../Components/Common/withRouter";
-// Formik validation
-import * as Yup from "yup";
-import { useFormik } from "formik";
+interface FormState {
+    email: string;
+    password: string;
+}
 
-// actions
-import { loginUser, socialLogin, resetLoginFlag } from "../../slices/thunks";
+interface ErrorState {
+    email?: string;
+    password?: string;
+}
 
-import logoLight from "../../assets/images/logo-light.png";
-import { createSelector } from "reselect";
-//import images
+const Login = () => {
+    const [passwordShow, setPasswordShow] = useState(false);
+    const [form, setForm] = useState<FormState>({ email: '', password: '' });
+    const [errors, setErrors] = useState<ErrorState>({});
+    const navigate = useNavigate();
 
-import { test } from "services/auth";
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
 
-const Login = (props: any) => {
-  const handletest = async () => {
-    try {
-      const testResponse = await test();
-      console.log("testaxios OK", testResponse);
-    } catch (error) {
-      console.error("testaxios failed", error);
-    }
-  };
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post('http://localhost:4000/auth/login', form);
+            console.log('Login successful:', response.data);
+            localStorage.setItem('token', response.data.token);
+            navigate('/dashboard');
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                console.log('Error response:', error.response.data);
+                setErrors(error.response.data.errors || {});
+            } else {
+                console.error('Error message:', (error as Error).message);
+            }
+        }
+    };
 
-  const dispatch: any = useDispatch();
+    return (
+        <React.Fragment>
+            <ParticlesAuth>
+                <div className="auth-page-content mt-lg-5">
+                    <Container>
+                        <Row>
+                            <Col lg={12}>
+                                <div className="text-center mt-sm-5 mb-4 text-white-50">
+                                    <div>
+                                        <Link to="/" className="d-inline-block auth-logo">
+                                            <img src={logoLight} alt="" height="20" />
+                                        </Link>
+                                    </div>
+                                    <p className="mt-3 fs-15 fw-medium">Premium Admin & Dashboard Template</p>
+                                </div>
+                            </Col>
+                        </Row>
 
-  const selectLayoutState = (state: any) => state;
-  const loginpageData = createSelector(selectLayoutState, (state) => ({
-    user: state.Account.user,
-    error: state.Login.error,
-    errorMsg: state.Login.errorMsg,
-  }));
-  // Inside your component
-  const { user, error, errorMsg } = useSelector(loginpageData);
+                        <Row className="justify-content-center">
+                            <Col md={8} lg={6} xl={5}>
+                                <Card className="mt-4">
+                                    <CardBody className="p-4">
+                                        <div className="text-center mt-2">
+                                            <h5 className="text-primary">Welcome Back !</h5>
+                                            <p className="text-muted">Sign in to continue to Velzon.</p>
+                                        </div>
+                                        <div className="p-2 mt-4">
+                                            <Form onSubmit={handleSubmit}>
+                                                <div className="mb-3">
+                                                    <Label htmlFor="email" className="form-label">Email</Label>
+                                                    <Input
+                                                        type="email"
+                                                        className="form-control"
+                                                        id="email"
+                                                        placeholder="Enter email"
+                                                        name="email"
+                                                        value={form.email}
+                                                        onChange={handleChange}
+                                                        invalid={!!errors.email}
+                                                    />
+                                                    {errors.email && (
+                                                        <FormFeedback type="invalid">{errors.email}</FormFeedback>
+                                                    )}
+                                                </div>
 
-  const [userLogin, setUserLogin] = useState<any>([]);
-  const [passwordShow, setPasswordShow] = useState<boolean>(false);
+                                                <div className="mb-3">
+                                                    <div className="float-end">
+                                                        <Link to="/auth-pass-reset-basic" className="text-muted">Forgot password?</Link>
+                                                    </div>
+                                                    <Label className="form-label" htmlFor="password-input">Password</Label>
+                                                    <div className="position-relative auth-pass-inputgroup mb-3">
+                                                        <Input
+                                                            type={passwordShow ? "text" : "password"}
+                                                            className="form-control pe-5 password-input"
+                                                            placeholder="Enter password"
+                                                            id="password-input"
+                                                            name="password"
+                                                            value={form.password}
+                                                            onChange={handleChange}
+                                                            invalid={!!errors.password}
+                                                        />
+                                                        {errors.password && (
+                                                            <FormFeedback type="invalid">{errors.password}</FormFeedback>
+                                                        )}
 
-  const [loader, setLoader] = useState<boolean>(false);
+                                                        <button
+                                                            className="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
+                                                            type="button"
+                                                            id="password-addon"
+                                                            onClick={() => setPasswordShow(!passwordShow)}>
+                                                            <i className="ri-eye-fill align-middle"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
 
-  useEffect(() => {
-    if (user && user) {
-      const updatedUserData =
-        process.env.REACT_APP_DEFAULTAUTH === "firebase"
-          ? user.multiFactor.user.email
-          : user.email;
-      const updatedUserPassword =
-        process.env.REACT_APP_DEFAULTAUTH === "firebase"
-          ? ""
-          : user.confirm_password;
-      setUserLogin({
-        email: updatedUserData,
-        password: updatedUserPassword,
-      });
-    }
-  }, [user]);
+                                                <div className="form-check">
+                                                    <Input className="form-check-input" type="checkbox" value="" id="auth-remember-check" />
+                                                    <Label className="form-check-label" htmlFor="auth-remember-check">Remember me</Label>
+                                                </div>
 
-  const validation: any = useFormik({
-    // enableReinitialize : use this flag when initial values needs to be changed
-    enableReinitialize: true,
+                                                <div className="mt-4">
+                                                    <Button color="success" className="btn btn-success w-100" type="submit">Sign In</Button>
+                                                </div>
 
-    initialValues: {
-      email: userLogin.email || "admin@themesbrand.com" || "",
-      password: userLogin.password || "123456" || "",
-    },
-    validationSchema: Yup.object({
-      email: Yup.string().required("Please Enter Your Email"),
-      password: Yup.string().required("Please Enter Your Password"),
-    }),
-    onSubmit: (values) => {
-      dispatch(loginUser(values, props.router.navigate));
-      setLoader(true);
-    },
-  });
+                                                <div className="mt-4 text-center">
+                                                    <div className="signin-other-title">
+                                                        <h5 className="fs-13 mb-4 title">Sign In with</h5>
+                                                    </div>
+                                                    <div>
+                                                        <Button color="primary" className="btn-icon"><i className="ri-facebook-fill fs-16"></i></Button>{" "}
+                                                        <Button color="danger" className="btn-icon"><i className="ri-google-fill fs-16"></i></Button>{" "}
+                                                        <Button color="dark" className="btn-icon"><i className="ri-github-fill fs-16"></i></Button>{" "}
+                                                        <Button color="info" className="btn-icon"><i className="ri-twitter-fill fs-16"></i></Button>
+                                                    </div>
+                                                </div>
+                                            </Form>
+                                        </div>
+                                    </CardBody>
+                                </Card>
 
-  const signIn = (type: any) => {
-    dispatch(socialLogin(type, props.router.navigate));
-  };
-
-  //for facebook and google authentication
-  const socialResponse = (type: any) => {
-    signIn(type);
-  };
-
-  useEffect(() => {
-    if (errorMsg) {
-      setTimeout(() => {
-        dispatch(resetLoginFlag());
-        setLoader(false);
-      }, 3000);
-    }
-  }, [dispatch, errorMsg]);
-
-  document.title = "Basic SignIn | Velzon - React Admin & Dashboard Template";
-  return (
-    <React.Fragment>
-      <ParticlesAuth>
-        <div className="auth-page-content mt-lg-5">
-          <Container>
-            <Row>
-              <Col lg={12}>
-                <div className="text-center mt-sm-5 mb-4 text-white-50">
-                  <div>
-                    <Link to="/" className="d-inline-block auth-logo">
-                      <img src={logoLight} alt="" height="20" />
-                    </Link>
-                  </div>
-                  <p className="mt-3 fs-15 fw-medium">
-                    Premium Admin & Dashboard Template
-                  </p>
+                                <div className="mt-4 text-center">
+                                    <p className="mb-0">Don't have an account ? <Link to="/auth-signup-basic" className="fw-semibold text-primary text-decoration-underline"> Signup </Link> </p>
+                                </div>
+                            </Col>
+                        </Row>
+                    </Container>
                 </div>
-              </Col>
-            </Row>
-
-            <Row className="justify-content-center">
-              <Col md={8} lg={6} xl={5}>
-                <Card className="mt-4">
-                  <CardBody className="p-4">
-                    <div className="text-center mt-2">
-                      <h5 className="text-primary">Welcome Back</h5>
-                      <p className="text-muted">
-                        Sign in to continue to Velzon.
-                      </p>
-                    </div>
-                    {error && error ? (
-                      <Alert color="danger"> {error} </Alert>
-                    ) : null}
-                    <div className="p-2 mt-4">
-                      <Form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          validation.handleSubmit();
-                          return false;
-                        }}
-                        action="#"
-                      >
-                        <div className="mb-3">
-                          <Label htmlFor="email" className="form-label">
-                            Email
-                          </Label>
-                          <Input
-                            name="email"
-                            className="form-control"
-                            placeholder="Enter email"
-                            type="email"
-                            onChange={validation.handleChange}
-                            onBlur={validation.handleBlur}
-                            value={validation.values.email || ""}
-                            invalid={
-                              validation.touched.email &&
-                              validation.errors.email
-                                ? true
-                                : false
-                            }
-                          />
-                          {validation.touched.email &&
-                          validation.errors.email ? (
-                            <FormFeedback type="invalid">
-                              {validation.errors.email}
-                            </FormFeedback>
-                          ) : null}
-                        </div>
-
-                        <div className="mb-3">
-                          <div className="float-end">
-                            <Link to="/forgot-password" className="text-muted">
-                              Forgot password?
-                            </Link>
-                          </div>
-                          <Label
-                            className="form-label"
-                            htmlFor="password-input"
-                          >
-                            Password
-                          </Label>
-                          <div className="position-relative auth-pass-inputgroup mb-3">
-                            <Input
-                              name="password"
-                              value={validation.values.password || ""}
-                              type={passwordShow ? "text" : "password"}
-                              className="form-control pe-5"
-                              placeholder="Enter Password"
-                              onChange={validation.handleChange}
-                              onBlur={validation.handleBlur}
-                              invalid={
-                                validation.touched.password &&
-                                validation.errors.password
-                                  ? true
-                                  : false
-                              }
-                            />
-                            {validation.touched.password &&
-                            validation.errors.password ? (
-                              <FormFeedback type="invalid">
-                                {validation.errors.password}
-                              </FormFeedback>
-                            ) : null}
-                            <button
-                              className="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted"
-                              type="button"
-                              id="password-addon"
-                              onClick={() => setPasswordShow(!passwordShow)}
-                            >
-                              <i className="ri-eye-fill align-middle"></i>
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="form-check">
-                          <Input
-                            className="form-check-input"
-                            type="checkbox"
-                            value=""
-                            id="auth-remember-check"
-                          />
-                          <Label
-                            className="form-check-label"
-                            htmlFor="auth-remember-check"
-                          >
-                            Remember me
-                          </Label>
-                        </div>
-
-                        <div className="mt-4">
-                          <Button
-                            color="success"
-                            disabled={loader && true}
-                            className="btn btn-success w-100"
-                            type="submit"
-                          >
-                            {loader && (
-                              <Spinner size="sm" className="me-2">
-                                {" "}
-                                Loading...{" "}
-                              </Spinner>
-                            )}
-                            Sign In
-                          </Button>
-                        </div>
-                      </Form>
-                    </div>
-                  </CardBody>
-                </Card>
-
-                <div className="mt-4 text-center">
-                  <p className="mb-0">
-                    Don't have an account ?{" "}
-                    <Link
-                      to="/register"
-                      className="fw-semibold text-primary text-decoration-underline"
-                    >
-                      {" "}
-                      Signup{" "}
-                    </Link>{" "}
-                  </p>
-                </div>
-              </Col>
-            </Row>
-          </Container>
-
-          <Button color="info" onClick={handletest}>
-            Info
-          </Button>
-        </div>
-      </ParticlesAuth>
-    </React.Fragment>
-  );
+            </ParticlesAuth>
+        </React.Fragment>
+    );
 };
 
-export default withRouter(Login);
+export default Login;

@@ -1,8 +1,9 @@
 import { APIClient } from "./api_helper";
-
-import * as url from "./url_helper";
+import * as url from "./url_helper"
 
 const api = new APIClient();
+
+export const getDemoData = (data: any) => api.get(url.GET_DEMO_DATA, data);
 
 // Gets the logged in user data from local session
 export const getLoggedInUser = () => {
@@ -100,7 +101,7 @@ export const deleteMessage = (message : any) => api.delete(url.DELETE_MESSAGE, {
 export const getChannels = () => api.get(url.GET_CHANNELS);
 
 // MailBox
-//get Mail
+//get Mail  
 export const getMailDetails = () => api.get(url.GET_MAIL_DETAILS);
 
 // delete Mail
