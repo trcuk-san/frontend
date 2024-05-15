@@ -1,35 +1,31 @@
-import React, { useEffect } from "react";
+import React, { useEffect, ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { setAuthorization } from "../helpers/api_helper";
 import { useDispatch } from "react-redux";
-
+import { setAuthorization } from "../helpers/api_helper";
 import { useProfile } from "../Components/Hooks/UserHooks";
-
 import { logoutUser } from "../slices/auth/login/thunk";
 
-const AuthProtected = (props: any) => {
+const AuthProtected = ({ children }: { children: ReactNode }) => {
   const dispatch: any = useDispatch();
   const { userProfile, loading, token } = useProfile();
 
   useEffect(() => {
-    const x = localStorage.getItem("token");
-    console.log(x);
-    if (userProfile && !loading && token) {
+    if (token) {
       setAuthorization(token);
-    } else if (!userProfile && loading && !token) {
+    } else {
       dispatch(logoutUser());
     }
-  }, [token, userProfile, loading, dispatch]);
+  }, [token, dispatch]);
 
-  /*
-    Navigate is un-auth access protected routes via url
-    */
-
-  if (!userProfile && loading && !token) {
-    return <Navigate to={{ pathname: "/login" }} />;
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
-  return <>{props.children}</>;
+  if (!userProfile || !token) {
+    return <Navigate to="/login" />;
+  }
+
+  return <>{children}</>;
 };
 
 export default AuthProtected;

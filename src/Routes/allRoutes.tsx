@@ -47,6 +47,7 @@ import CrmDeals from "../pages/Crm/CrmDeals/index";
 import CrmLeads from "../pages/Crm/CrmLeads/index";
 
 // //Invoices
+import OrderPage from "../pages/Invoices/OrderPage";
 import Order from "../pages/Invoices/List";
 import Car from "../pages/Invoices/List1";
 import Member from "../pages/Invoices/List2";
@@ -250,8 +251,6 @@ import Kanbanboard from "pages/Tasks/KanbanBoard";
 // import Testaxios from "../pages/Test/Testaxios";
 
 const authProtectedRoutes = [
-  { path: "/dashboard-analytics", component: <DashboardAnalytics /> },
-  { path: "/dashboard-crm", component: <DashboardCrm /> },
   { path: "/dashboard", component: <DashboardEcommerce /> },
   { path: "/index", component: <DashboardEcommerce /> },
   { path: "/dashboard-crypto", component: <DashboardCrypto /> },
@@ -512,6 +511,9 @@ const publicRoutes = [
 
   { path: "/pages-maintenance", component: <Maintenance /> },
   { path: "/pages-co  ming-soon", component: <ComingSoon /> },
+  { path: "/order", component: <OrderPage /> }, // เพิ่มหน้า OrderPage ที่ไม่ต้องการตรวจสอบสิทธิ์
+  { path: "/", exact: true, component: <Navigate to="/dashboard" /> },
+  { path: "*", component: <Navigate to="/dashboard" /> },
 
   // { path: "/testtest", component: <Testaxios /> },
 ];

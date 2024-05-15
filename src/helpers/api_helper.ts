@@ -9,10 +9,11 @@ axios.defaults.baseURL = api.API_URL;
 axios.defaults.headers.post["Content-Type"] = "application/json";
 
 // content type
-const authUser: any = sessionStorage.getItem("authUser")
-const token = JSON.parse(authUser) ? JSON.parse(authUser).token : null;
-if (token)
+const authUser: any = sessionStorage.getItem("authUser");
+const token = authUser ? JSON.parse(authUser).token : null;
+if (token) {
   axios.defaults.headers.common["Authorization"] = "Bearer " + token;
+}
 
 // intercepting to capture errors
 axios.interceptors.response.use(
@@ -22,7 +23,7 @@ axios.interceptors.response.use(
   function (error) {
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     let message;
-    switch (error.status) {
+    switch (error.response?.status) {
       case 500:
         message = "Internal Server Error";
         break;
@@ -38,12 +39,13 @@ axios.interceptors.response.use(
     return Promise.reject(message);
   }
 );
+
 /**
  * Sets the default authorization
  * @param {*} token
  */
-const setAuthorization = (token : string) => {
-  console.log('setAuthorization', token);
+
+const setAuthorization = (token: string) => {
   axios.defaults.headers.common["Authorization"] = "Bearer " + token;
 };
 
