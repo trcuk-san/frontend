@@ -6,7 +6,6 @@ interface IRegister {
   phone: string;
   email: string;
   password: string;
-  conPassword: string;
 }
 
 interface ILogin {
@@ -21,7 +20,7 @@ export const register = async (body: IRegister) => {
 };
 
 export const login = async (body: ILogin) => {
-  const res = await axios.post('/auth/login', body);
+  const res = await axios.post("http://localhost:4000/auth/login", body);
   console.log('res login ', res);
   return res;
 };
@@ -42,7 +41,7 @@ export const getProfile = async () => {
 
 export const test = async () => {
   try {
-    const response = await axios.get('http://localhost:4000/auth/test'); // Update with your actual API endpoint
+    const response = await axios.get('http://localhost:4000/auth/test');
     console.log('Response:', response);
     return response;
   } catch (error) {
