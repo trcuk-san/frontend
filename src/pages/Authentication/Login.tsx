@@ -12,6 +12,7 @@ import {
   Input,
   Label,
   Row,
+  Alert,
 } from "reactstrap";
 import logoLight from "../../assets/images/logo-light.png";
 import ParticlesAuth from "../AuthenticationInner/ParticlesAuth";
@@ -20,11 +21,11 @@ import { login } from "services/auth";
 interface ErrorState {
   email?: string;
   password?: string;
+  general?: string;
 }
 
 const Login = () => {
   const [passwordShow, setPasswordShow] = useState(false);
-  //   const [form, setForm] = useState<FormState>({ email: "", password: "" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<ErrorState>({});
@@ -39,8 +40,21 @@ const Login = () => {
     }
   };
 
+  const validateForm = () => {
+    const newErrors: ErrorState = {};
+    if (!email) newErrors.email = "Email is required";
+    if (!password) newErrors.password = "Password is required";
+    return newErrors;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      return;
+    }
+    setErrors({});
     try {
       const res: any = await login({
         email: email,
@@ -50,13 +64,21 @@ const Login = () => {
         console.log("Login successful:", res.token);
         localStorage.setItem("token", res.token);
         navigate("/orders");
+      } else {
+        setErrors({ general: "Login failed. Please check your credentials." });
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         console.log("Error response:", error.response.data);
-        setErrors(error.response.data.errors || {});
+        setErrors({
+          ...error.response.data.errors,
+          general: error.response.data.message || "An error occurred.",
+        });
       } else {
         console.error("Error message:", (error as Error).message);
+        setErrors({
+          general: "An unexpected error occurred. Please try again.",
+        });
       }
     }
   };
@@ -92,6 +114,9 @@ const Login = () => {
                       </p>
                     </div>
                     <div className="p-2 mt-4">
+                      {errors.general && (
+                        <Alert color="danger">{errors.general}</Alert>
+                      )}
                       <Form onSubmit={handleSubmit}>
                         <div className="mb-3">
                           <Label htmlFor="email" className="form-label">
@@ -180,26 +205,6 @@ const Login = () => {
                           >
                             Sign In
                           </Button>
-                        </div>
-
-                        <div className="mt-4 text-center">
-                          <div className="signin-other-title">
-                            <h5 className="fs-13 mb-4 title">Sign In with</h5>
-                          </div>
-                          <div>
-                            <Button color="primary" className="btn-icon">
-                              <i className="ri-facebook-fill fs-16"></i>
-                            </Button>{" "}
-                            <Button color="danger" className="btn-icon">
-                              <i className="ri-google-fill fs-16"></i>
-                            </Button>{" "}
-                            <Button color="dark" className="btn-icon">
-                              <i className="ri-github-fill fs-16"></i>
-                            </Button>{" "}
-                            <Button color="info" className="btn-icon">
-                              <i className="ri-twitter-fill fs-16"></i>
-                            </Button>
-                          </div>
                         </div>
                       </Form>
                     </div>
