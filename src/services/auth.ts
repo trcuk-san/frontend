@@ -34,3 +34,19 @@ export const login = async (body: ILogin) => {
 export const getProfile = async () => {
   return await axios.get('/auth/me');
 };
+
+// export const test = async () => {
+//   const res = await axios.get('/auth/test');
+//   return res;
+// };
+
+export const test = async () => {
+  try {
+    const response = await axios.get('http://localhost:4000/auth/test'); // Update with your actual API endpoint
+    console.log('Response:', response);
+    return response;
+  } catch (error) {
+    console.error('Error:', error);
+    throw error;
+  }
+};
