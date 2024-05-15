@@ -49,7 +49,7 @@ const Login = () => {
       if (res.message === "success") {
         console.log("Login successful:", res.token);
         localStorage.setItem("token", res.token);
-        navigate("/dashboard");
+        navigate("/orders");
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
