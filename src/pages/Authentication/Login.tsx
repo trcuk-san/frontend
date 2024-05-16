@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import {jwtDecode} from "jwt-decode";
 import {
   Button,
   Card,
@@ -12,16 +13,14 @@ import {
   Input,
   Label,
   Row,
-  Alert,
 } from "reactstrap";
 import logoLight from "../../assets/images/logo-light.png";
 import ParticlesAuth from "../AuthenticationInner/ParticlesAuth";
-import { login } from "services/auth";
+import { login, setAuthorization } from "../../services/auth";
 
 interface ErrorState {
   email?: string;
   password?: string;
-  general?: string;
 }
 
 const Login = () => {
@@ -40,45 +39,33 @@ const Login = () => {
     }
   };
 
-  const validateForm = () => {
-    const newErrors: ErrorState = {};
-    if (!email) newErrors.email = "Email is required";
-    if (!password) newErrors.password = "Password is required";
-    return newErrors;
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formErrors = validateForm();
-    if (Object.keys(formErrors).length > 0) {
-      setErrors(formErrors);
-      return;
-    }
-    setErrors({});
     try {
-      const res: any = await login({
+      const res = await login({
         email: email,
         password: password,
       });
-      if (res.message === "success") {
-        console.log("Login successful:", res.token);
-        localStorage.setItem("token", res.token);
+      console.log("Login response:", res);
+
+      if (res.data && res.data.message === "Login successful") {
+        const { token } = res.data;
+        console.log("Login successful:", token);
+        localStorage.setItem("token", token);
+        const decoded: any = jwtDecode(token);
+        localStorage.setItem("userId", decoded.uid);
+        setAuthorization(token);
+        console.log("Navigating to /orders");
         navigate("/orders");
       } else {
-        setErrors({ general: "Login failed. Please check your credentials." });
+        console.log("Login response did not have 'message' property:", res.data);
       }
-    } catch (error) {
+    } catch (error: any) {
       if (axios.isAxiosError(error) && error.response) {
         console.log("Error response:", error.response.data);
-        setErrors({
-          ...error.response.data.errors,
-          general: error.response.data.message || "An error occurred.",
-        });
+        setErrors(error.response.data.errors || {});
       } else {
-        console.error("Error message:", (error as Error).message);
-        setErrors({
-          general: "An unexpected error occurred. Please try again.",
-        });
+        console.error("Error message:", error?.message || "An unknown error occurred");
       }
     }
   };
@@ -114,9 +101,6 @@ const Login = () => {
                       </p>
                     </div>
                     <div className="p-2 mt-4">
-                      {errors.general && (
-                        <Alert color="danger">{errors.general}</Alert>
-                      )}
                       <Form onSubmit={handleSubmit}>
                         <div className="mb-3">
                           <Label htmlFor="email" className="form-label">
@@ -141,17 +125,11 @@ const Login = () => {
 
                         <div className="mb-3">
                           <div className="float-end">
-                            <Link
-                              to="/auth-pass-reset-basic"
-                              className="text-muted"
-                            >
+                            <Link to="/auth-pass-reset-basic" className="text-muted">
                               Forgot password?
                             </Link>
                           </div>
-                          <Label
-                            className="form-label"
-                            htmlFor="password-input"
-                          >
+                          <Label className="form-label" htmlFor="password-input">
                             Password
                           </Label>
                           <div className="position-relative auth-pass-inputgroup mb-3">
@@ -189,22 +167,35 @@ const Login = () => {
                             value=""
                             id="auth-remember-check"
                           />
-                          <Label
-                            className="form-check-label"
-                            htmlFor="auth-remember-check"
-                          >
+                          <Label className="form-check-label" htmlFor="auth-remember-check">
                             Remember me
                           </Label>
                         </div>
 
                         <div className="mt-4">
-                          <Button
-                            color="success"
-                            className="btn btn-success w-100"
-                            type="submit"
-                          >
+                          <Button color="success" className="btn btn-success w-100" type="submit">
                             Sign In
                           </Button>
+                        </div>
+
+                        <div className="mt-4 text-center">
+                          <div className="signin-other-title">
+                            <h5 className="fs-13 mb-4 title">Sign In with</h5>
+                          </div>
+                          <div>
+                            <Button color="primary" className="btn-icon">
+                              <i className="ri-facebook-fill fs-16"></i>
+                            </Button>{" "}
+                            <Button color="danger" className="btn-icon">
+                              <i className="ri-google-fill fs-16"></i>
+                            </Button>{" "}
+                            <Button color="dark" className="btn-icon">
+                              <i className="ri-github-fill fs-16"></i>
+                            </Button>{" "}
+                            <Button color="info" className="btn-icon">
+                              <i className="ri-twitter-fill fs-16"></i>
+                            </Button>{" "}
+                          </div>
                         </div>
                       </Form>
                     </div>
@@ -214,10 +205,7 @@ const Login = () => {
                 <div className="mt-4 text-center">
                   <p className="mb-0">
                     Don't have an account ?{" "}
-                    <Link
-                      to="/auth-signup-basic"
-                      className="fw-semibold text-primary text-decoration-underline"
-                    >
+                    <Link to="/auth-signup-basic" className="fw-semibold text-primary text-decoration-underline">
                       {" "}
                       Signup{" "}
                     </Link>{" "}

@@ -1,5 +1,5 @@
-// import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+
 interface IRegister {
   firstname: string;
   lastname: string;
@@ -13,39 +13,32 @@ interface ILogin {
   password: string;
 }
 
+const API_BASE_URL = 'http://localhost:4000';
+
 export const register = async (body: IRegister) => {
-  const res = await axios.post('http://localhost:4000/auth/register', body);
+  const res = await axios.post(`${API_BASE_URL}/auth/register`, body);
   console.log('res register ', res);
   return res;
 };
 
 export const login = async (body: ILogin) => {
-  const res = await axios.post("http://localhost:4000/auth/login", body);
+  const res = await axios.post(`${API_BASE_URL}/auth/login`, body);
   console.log('res login ', res);
   return res;
 };
-// export const getToken = async () => {
-//   const token = await AsyncStorage.getItem('token');
-//   return token;
-//   // return token.length > 0 ? String(token) : '';
-// };
 
-export const getProfile = async () => {
-  return await axios.get('/auth/me');
+export const setAuthorization = (token: string) => {
+  console.log("Setting token:", token); // Debugging
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 };
 
-// export const test = async () => {
-//   const res = await axios.get('/auth/test');
-//   return res;
-// };
-
-export const test = async () => {
+export const getProfile = async (userId: string) => {
   try {
-    const response = await axios.get('http://localhost:4000/auth/test');
-    console.log('Response:', response);
-    return response;
-  } catch (error) {
-    console.error('Error:', error);
+    const res = await axios.get(`${API_BASE_URL}/auth/profile/${userId}`);
+    console.log("Profile response:", res); // Debugging
+    return res.data;
+  } catch (error: any) {
+    console.error("Error fetching profile:", error.response); // Debugging
     throw error;
   }
 };
