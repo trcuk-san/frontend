@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+
 interface IRegister {
   firstname: string;
   lastname: string;
@@ -42,3 +43,4 @@ export const getProfile = async (userId: string) => {
     throw error;
   }
 };
+

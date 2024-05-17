@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { isEmpty } from "lodash";
-
 import {
   Container,
   Row,
@@ -14,28 +12,38 @@ import {
   FormFeedback,
   Form,
 } from "reactstrap";
-
-// Formik Validation
 import * as Yup from "yup";
 import { useFormik } from "formik";
-
-//redux
 import { useSelector, useDispatch } from "react-redux";
-
+import {jwtDecode} from "jwt-decode";
 import avatar from "../../assets/images/users/avatar-1.jpg";
-// actions
 import { editProfile, resetProfileFlag } from "../../slices/thunks";
 import { createSelector } from "reselect";
-
-const UserProfile = () => {
-  const dispatch: any = useDispatch();
-
-  const [email, setemail] = useState("admin@gmail.com");
-  const [idx, setidx] = useState("1");
-
-  const [userName, setUserName] = useState("Admin");
+import { isEmpty } from "lodash";
 
 
+
+interface User {
+  _id: string;
+  firstname: string;
+  lastname: string;
+  phone: string;
+  email: string;
+  profile_picture: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+const UserProfile: React.FC = () => {
+  const dispatch = useDispatch<any>();
+
+  const [user, setUser] = useState<User | null>(null);
+  const [email, setEmail] = useState("");
+  const [idx, setIdx] = useState("");
+  const [userName, setUserName] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
   const selectLayoutState = (state: any) => state.Profile;
   const userprofileData = createSelector(
@@ -43,75 +51,140 @@ const UserProfile = () => {
     (state) => ({
       user: state.user,
       success: state.success,
-      error: state.error
+      error: state.error,
     })
   );
-  // Inside your component
-  const {
-    user, success, error
-  } = useSelector(userprofileData);
 
+  const { user: reduxUser, success: reduxSuccess, error: reduxError } = useSelector(userprofileData);
 
   useEffect(() => {
-    if (sessionStorage.getItem("authUser")) {
-      const storedUser = sessionStorage.getItem("authUser");
-      if (storedUser) {
-        const obj = JSON.parse(storedUser);
-
-        if (process.env.REACT_APP_DEFAULTAUTH === "firebase") {
-
-          obj.displayName = user.username;
-          setUserName(obj.displayName || "Admin");
-          setemail(obj.email || "admin@gmail.com");
-          setidx(obj.uid || '1');
-        } else if (process.env.REACT_APP_DEFAULTAUTH === "fake" ||
-          process.env.REACT_APP_DEFAULTAUTH === "jwt"
-        ) {
-          if (!isEmpty(user)) {
-            obj.data.first_name = user.first_name;
-            sessionStorage.removeItem("authUser");
-            sessionStorage.setItem("authUser", JSON.stringify(obj));
-          }
-
-          setUserName(obj.data.first_name || "Admin");
-          setemail(obj.data.email || "admin@gmail.com");
-          setidx(obj.data._id || "1");
-
-        }
-        setTimeout(() => {
-          dispatch(resetProfileFlag());
-        }, 3000);
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found in localStorage');
+        setError('No token found in localStorage');
+        return;
       }
+
+      try {
+        const decoded: any = jwtDecode(token);
+        const userId = decoded.uid;
+        console.log('Decoded userId from token:', userId);
+
+        const response = await fetch(`http://localhost:4000/auth/profile/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('Fetched user data:', JSON.stringify(userData, null, 2));
+          setUser(userData);
+          setUserName(userData.firstname);
+          setEmail(userData.email);
+          setIdx(userData._id);
+        } else {
+          console.error('No user data in response:', response.statusText);
+          setError('No user data found');
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setError('Error fetching profile');
+      }
+    };
+
+    fetchProfile();
+
+    const storedUser = sessionStorage.getItem("authUser");
+    if (storedUser) {
+      const obj = JSON.parse(storedUser);
+
+      if (!isEmpty(reduxUser)) {
+        obj.data.first_name = reduxUser.first_name;
+        sessionStorage.setItem("authUser", JSON.stringify(obj));
+      }
+
+      setUserName(obj.data.first_name);
+      setEmail(obj.data.email);
+      setIdx(obj.data._id || "1");
+
+      setTimeout(() => {
+        dispatch(resetProfileFlag());
+      }, 3000);
     }
-  }, [dispatch, user]);
-
-
+  }, [dispatch, reduxUser]);
 
   const validation = useFormik({
-    // enableReinitialize : use this flag when initial values needs to be changed
     enableReinitialize: true,
-
     initialValues: {
-      first_name: userName || 'Admin',
-      idx: idx || '',
+      first_name: userName,
+      idx: idx || "",
     },
     validationSchema: Yup.object({
       first_name: Yup.string().required("Please Enter Your UserName"),
     }),
-    onSubmit: (values) => {
-      dispatch(editProfile(values));
+    onSubmit: async (values) => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:4000/auth/profile/${idx}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(values),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserName(data.first_name);
+          setSuccess(true);
+          setError("");
+
+          // อัปเดต user ใน state และ sessionStorage ทันที
+          setUser((prevUser) => prevUser ? { ...prevUser, firstname: data.first_name } : prevUser);
+          const storedUser = sessionStorage.getItem("authUser");
+          if (storedUser) {
+            const obj = JSON.parse(storedUser);
+            obj.data.first_name = data.first_name;
+            sessionStorage.setItem("authUser", JSON.stringify(obj));
+          }
+        } else {
+          throw new Error('Failed to update profile');
+        }
+      } catch (error) {
+        setError("Failed to update profile");
+        console.error("Error updating profile:", error);
+        setTimeout(() => setError(""), 3000);
+      }
     }
   });
 
+  useEffect(() => {
+    if (success) {
+      const timeout = setTimeout(() => setSuccess(false), 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [success]);
+
+  useEffect(() => {
+    // อัปเดตชื่อผู้ใช้ในฟอร์มหลังจากที่มีการอัปเดตใน state
+    validation.setFieldValue('first_name', userName);
+  }, [userName, validation]);
+
   document.title = "Profile | Velzon - React Admin & Dashboard Template";
+
   return (
     <React.Fragment>
       <div className="page-content mt-lg-5">
         <Container fluid>
           <Row>
             <Col lg="12">
-              {error && error ? <Alert color="danger">{error}</Alert> : null}
-              {success ? <Alert color="success">Username Updated To {userName}</Alert> : null}
+              {error && <Alert color="danger">{error}</Alert>}
+              {success && <Alert color="success">Username Updated To {userName}</Alert>}
+              {reduxError && <Alert color="danger">{reduxError}</Alert>}
+              {reduxSuccess && <Alert color="success">Username Updated To {userName}</Alert>}
 
               <Card>
                 <CardBody>
@@ -125,7 +198,7 @@ const UserProfile = () => {
                     </div>
                     <div className="flex-grow-1 align-self-center">
                       <div className="text-muted">
-                        <h5>{userName || "Admin"}</h5>
+                        <h5>{userName}</h5>
                         <p className="mb-1">Email Id : {email}</p>
                         <p className="mb-0">Id No : #{idx}</p>
                       </div>
@@ -152,13 +225,12 @@ const UserProfile = () => {
                   <Label className="form-label">User Name</Label>
                   <Input
                     name="first_name"
-                    // value={name}
                     className="form-control"
                     placeholder="Enter User Name"
                     type="text"
                     onChange={validation.handleChange}
                     onBlur={validation.handleBlur}
-                    value={validation.values.first_name || ""}
+                    value={validation.values.first_name}
                     invalid={
                       validation.touched.first_name && validation.errors.first_name ? true : false
                     }
