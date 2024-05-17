@@ -340,7 +340,7 @@ const Register: React.FC = () => {
                 <p className="mb-0">
                   Already have an account?{" "}
                   <Link
-                    to="/auth-signin-basic"
+                    to="/login"
                     className="fw-semibold text-primary text-decoration-underline"
                   >
                     {" "}
