@@ -39,6 +39,7 @@ const UserProfile = () => {
   const [email, setEmail] = useState("admin@gmail.com");
   const [idx, setIdx] = useState("1");
   const [userName, setUserName] = useState("Admin");
+  const [profilePicture, setProfilePicture] = useState(avatar); // เพิ่ม state สำหรับ profile picture
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
@@ -78,6 +79,7 @@ const UserProfile = () => {
           setUserName(userData.firstname);
           setEmail(userData.email);
           setIdx(userData._id);
+          setProfilePicture(userData.profile_picture || avatar); // ตั้งค่า profile picture
         } else {
           console.error("No user data in response:", response.statusText);
           setError("No user data found");
@@ -113,6 +115,7 @@ const UserProfile = () => {
           setUserName(obj.data.first_name || "Admin");
           setEmail(obj.data.email || "admin@gmail.com");
           setIdx(obj.data._id || "1");
+          setProfilePicture(obj.data.profile_picture || avatar); // ตั้งค่า profile picture จาก sessionStorage
         }
         setTimeout(() => {
           dispatch(resetProfileFlag());
@@ -195,7 +198,7 @@ const UserProfile = () => {
                   <div className="d-flex">
                     <div className="mx-3">
                       <img
-                        src={avatar}
+                        src={profilePicture} // ใช้ profilePicture จาก state
                         alt=""
                         className="avatar-md rounded-circle img-thumbnail"
                       />

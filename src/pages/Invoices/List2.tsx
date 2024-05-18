@@ -10,108 +10,147 @@ import {
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Form,
+  FormGroup,
+  Label,
+  Input,
 } from "reactstrap";
 import { Link } from "react-router-dom";
-import moment from "moment";
-import CountUp from "react-countup";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
-import DeleteModal from "../../Components/Common/DeleteModal";
-
-
-//Import Icons
 import FeatherIcon from "feather-icons-react";
-import { invoiceWidgets } from "../../common/data/invoiceList";
-
-//Import actions
-import {
-  getInvoices as onGetInvoices,
-  deleteInvoice as onDeleteInvoice,
-} from "../../slices/thunks";
-
-//redux
-import { useSelector, useDispatch } from "react-redux";
-
-import Loader from "../../Components/Common/Loader";
-
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { createSelector } from "reselect";
+import { useDispatch, useSelector } from "react-redux";
+import { deleteUser, updateUser } from "services/auth"; // Ensure updateUser is imported
+import DeleteModal from "Components/Common/DeleteModal";
 
-const Member = () => {
+interface IMember {
+  _id: string;
+  firstname: string;
+  lastname: string;
+  phone: string;
+  email: string;
+  profile_picture: string;
+}
+
+const Member: React.FC = () => {
+  const [members, setMembers] = useState<IMember[]>([]);
+  const [deleteModal, setDeleteModal] = useState<boolean>(false);
+  const [editModal, setEditModal] = useState<boolean>(false); // Add state for edit modal
+  const [selectedMember, setSelectedMember] = useState<IMember | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No token found');
+        }
+
+        const response = await fetch('http://localhost:4000/auth/users', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Error fetching users: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        if (result && result.data) {
+          setMembers(result.data);  // Ensure setting the correct data
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error("Error fetching users:", error.message);
+          setErrors({ fetch: 'Error fetching members' });
+        } else {
+          console.error("Unknown error:", error);
+        }
+      }
+    };
+
+    fetchMembers();
+  }, []);
+
   const dispatch: any = useDispatch();
 
   const selectLayoutState = (state: any) => state.Invoice;
-  const selectinvoiceProperties = createSelector(
-    selectLayoutState,
-    (state) => ({
-      invoices: state.invoices,
-      isInvoiceSuccess: state.isInvoiceSuccess,
-      error: state.error,
-    })
-  );
+  const selectMemberProperties = createSelector(selectLayoutState, (state) => ({
+    member: state.members,
+    isMemberSuccess: state.isMemberSuccess,
+    error: state.error,
+  }));
 
-  
-  // Inside your component
-  const {
-    invoices, isInvoiceSuccess, error
-  } = useSelector(selectinvoiceProperties);
+  const { member, isMemberSuccess, error } = useSelector(selectMemberProperties);
 
-
-  //delete invoice
-  const [deleteModal, setDeleteModal] = useState<boolean>(false);
-  const [deleteModalMulti, setDeleteModalMulti] = useState<boolean>(false);
-
-  const [invoice, setInvoice] = useState<any>(null);
-
-  useEffect(() => {
-    if (invoices && !invoices.length) {
-      dispatch(onGetInvoices());
-    }
-  }, [dispatch, invoices]);
-
-  useEffect(() => {
-    setInvoice(invoices);
-  }, [invoices]);
-
-  // Delete Data
-  const onClickDelete = (invoice: any) => {
-    setInvoice(invoice);
+  const onClickDelete = (member: IMember) => {
+    setSelectedMember(member);
     setDeleteModal(true);
   };
 
-  const handleDeleteInvoice = () => {
-    if (invoice) {
-      dispatch(onDeleteInvoice(invoice._id));
-      setDeleteModal(false);
+  const handleDeleteMember = async () => {
+    if (selectedMember) {
+      try {
+        await deleteUser(selectedMember._id);
+        setMembers(members.filter(m => m._id !== selectedMember._id));
+        setDeleteModal(false);
+        toast.success("User deleted successfully");
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error("Error deleting member:", error.message);
+          setErrors({ delete: 'Error deleting member' });
+        } else {
+          console.error("Unknown error:", error);
+        }
+      }
     }
   };
 
-
-  const handleValidDate = (date: any) => {
-    const date1 = moment(new Date(date)).format("DD MMM Y");
-    return date1;
+  const onClickEdit = (member: IMember) => {
+    setSelectedMember(member);
+    setEditModal(true);
   };
 
-  const handleValidTime = (time: any) => {
-    const time1 = new Date(time);
-    const getHour = time1.getUTCHours();
-    const getMin = time1.getUTCMinutes();
-    const getTime = `${getHour}:${getMin}`;
-    var meridiem = "";
-    if (getHour >= 12) {
-      meridiem = "PM";
-    } else {
-      meridiem = "AM";
+  const handleEditMember = async () => {
+    if (selectedMember) {
+      try {
+        const updatedMember = {
+          firstname: selectedMember.firstname,
+          lastname: selectedMember.lastname,
+          phone: selectedMember.phone,
+          email: selectedMember.email,
+        };
+
+        await updateUser(selectedMember._id, updatedMember);
+        setMembers(members.map(m => (m._id === selectedMember._id ? { ...m, ...updatedMember } : m)));
+        setEditModal(false);
+        toast.success("User updated successfully");
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error("Error updating member:", error.message);
+          setErrors({ edit: 'Error updating member' });
+        } else {
+          console.error("Unknown error:", error);
+        }
+      }
     }
-    const updateTime = moment(getTime, 'hh:mm').format('hh:mm') + " " + meridiem;
-    return updateTime;
   };
 
-  // Checked All
   const checkedAll = useCallback(() => {
     const checkall: any = document.getElementById("checkBoxAll");
-    const ele = document.querySelectorAll(".invoiceCheckBox");
+    const ele = document.querySelectorAll(".memberCheckBox");
 
     if (checkall.checked) {
       ele.forEach((ele: any) => {
@@ -125,117 +164,119 @@ const Member = () => {
     deleteCheckbox();
   }, []);
 
-  // Delete Multiple
-  const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState([]);
-  const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
+  const deleteCheckbox = () => {
+    const ele: any = document.querySelectorAll(".memberCheckBox:checked");
+    ele.length > 0 ? setIsMultiDeleteButton(true) : setIsMultiDeleteButton(false);
+  };
 
-  const deleteMultiple = () => {
+  const deleteMultiple = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found');
+    }
+
     const checkall: any = document.getElementById("checkBoxAll");
-    selectedCheckBoxDelete.forEach((element: any) => {
-      dispatch(onDeleteInvoice(element.value));
-      setTimeout(() => { toast.clearWaitingQueue(); }, 3000);
-    });
+    for (const element of Array.from(document.querySelectorAll(".memberCheckBox:checked")) as HTMLInputElement[]) {
+      try {
+        await fetch(`http://localhost:4000/auth/users/${element.value}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        setMembers(members.filter(m => m._id !== element.value));
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error(`Error deleting user ${element.value}:`, error.message);
+          setErrors({ delete: 'Error deleting selected members' });
+        } else {
+          console.error("Unknown error:", error);
+        }
+      }
+    }
     setIsMultiDeleteButton(false);
     checkall.checked = false;
   };
 
-  const deleteCheckbox = () => {
-    const ele: any = document.querySelectorAll(".invoiceCheckBox:checked");
-    ele.length > 0 ? setIsMultiDeleteButton(true) : setIsMultiDeleteButton(false);
-    setSelectedCheckBoxDelete(ele);
-  };
-
-  //Column
   const columns = useMemo(
     () => [
       {
-        header: <input type="checkbox" id="checkBoxAll" className="form-check-input" onClick={() => checkedAll()} />,
+        header: (
+          <input
+            type="checkbox"
+            id="checkBoxAll"
+            className="form-check-input"
+            onClick={() => checkedAll()}
+          />
+        ),
         cell: (cell: any) => {
-          return <input type="checkbox" className="invoiceCheckBox form-check-input" value={cell.getValue()} onChange={() => deleteCheckbox()} />;
+          return (
+            <input
+              type="checkbox"
+              className="memberCheckBox form-check-input"
+              value={cell.getValue()}
+              onChange={() => deleteCheckbox()}
+            />
+          );
         },
-        id: '#',
+        id: "#",
         accessorKey: "_id",
         enableColumnFilter: false,
         enableSorting: false,
       },
       {
-        header: "ID",
-        accessorKey: "invoiceId",
+        header: "No.",
+        accessorKey: "_id",
         enableColumnFilter: false,
         cell: (cell: any) => {
-          return <Link to="/apps-invoices-details" className="fw-medium link-primary">{cell.getValue()}</Link>;
+          return <span>{cell.row.index + 1}</span>;
         },
       },
       {
-        header: "Customer",
-        accessorKey: "name",
-        enableColumnFilter: false,
-        cell: (cell: any) => (
-          <>
-            <div className="d-flex align-items-center">
-              {cell.row.original.img ? <img
-                src={process.env.REACT_APP_API_URL + "/images/users/" + cell.row.original.img}
-                alt=""
-                className="avatar-xs rounded-circle me-2"
-              /> :
-                <div className="flex-shrink-0 avatar-xs me-2">
-                  <div className="avatar-title bg-success-subtle text-success rounded-circle fs-13">
-                    {cell.row.original.name.charAt(0) + cell.row.original.name.split(" ").slice(-1).toString().charAt(0)}
-                  </div>
-                </div>}
-              {cell.getValue()}
-            </div>
-          </>
-        ),
-      },
-      {
-        header: "EMAIL",
-        accessorKey: "email",
-        enableColumnFilter: false,
-      },
-      {
-        header: "COUNTRY",
-        accessorKey: "country",
-        enableColumnFilter: false,
-      },
-      {
-        header: "DATE",
-        accessorKey: "date",
-        enableColumnFilter: false,
-        cell: (cell: any) => (
-          <>
-            {handleValidDate(cell.getValue())},{" "}
-            <small className="text-muted">{handleValidTime(cell.getValue())}</small>
-          </>
-        ),
-      },
-      {
-        header: "AMOUNT",
-        accessorKey: "amount",
-        enableColumnFilter: false,
-      },
-      {
-        header: "PAYMENT STATUS",
-        accessorKey: "status",
+        header: "First Name",
+        accessorKey: "firstname",
         enableColumnFilter: false,
         cell: (cell: any) => {
-          switch (cell.getValue()) {
-            case "Paid":
-              return <span className="badge text-uppercase bg-success-subtle text-success"> {cell.getValue()} </span>;
-            case "Unpaid":
-              return <span className="badge text-uppercase bg-warning-subtle text-warning"> {cell.getValue()} </span>;
-            case "Cancel":
-              return <span className="badge text-uppercase bg-danger-subtle text-danger"> {cell.getValue()} </span>;
-            default:
-              return <span className="badge text-uppercase bg-primary-subtle text-primary"> {cell.getValue()} </span>;
-          }
-        }
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Last Name",
+        accessorKey: "lastname",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Phone",
+        accessorKey: "phone",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Email",
+        accessorKey: "email",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Profile Picture",
+        accessorKey: "profile_picture",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <img src={cell.getValue()} alt="Profile" width={50} height={50} />;
+        },
       },
       {
         header: "Action",
         cell: (cellProps: any) => {
           return (
-            <UncontrolledDropdown >
+            <UncontrolledDropdown>
               <DropdownToggle
                 href="#"
                 className="btn btn-soft-secondary btn-sm dropdown"
@@ -244,26 +285,14 @@ const Member = () => {
                 <i className="ri-more-fill align-middle"></i>
               </DropdownToggle>
               <DropdownMenu className="dropdown-menu-end">
-                <DropdownItem href="/apps-invoices-details">
-                  <i className="ri-eye-fill align-bottom me-2 text-muted"></i>{" "}
-                  View
-                </DropdownItem>
-
-                <DropdownItem href="/apps-invoices-create">
+                <DropdownItem onClick={() => onClickEdit(cellProps.row.original)}>
                   <i className="ri-pencil-fill align-bottom me-2 text-muted"></i>{" "}
                   Edit
                 </DropdownItem>
-
-                <DropdownItem href="/#">
-                  <i className="ri-download-2-line align-bottom me-2 text-muted"></i>{" "}
-                  Download
-                </DropdownItem>
-
                 <DropdownItem divider />
-
                 <DropdownItem
                   href="#"
-                  onClick={() => { const invoiceData = cellProps.row.original; onClickDelete(invoiceData); }}
+                  onClick={() => onClickDelete(cellProps.row.original)}
                 >
                   <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i>{" "}
                   Delete
@@ -277,103 +306,93 @@ const Member = () => {
     [checkedAll]
   );
 
-  document.title = "Invoice List | Velzon - React Admin & Dashboard Template";
+  document.title = "Members List";
 
   return (
     <React.Fragment>
       <div className="page-content">
-        <DeleteModal
-          show={deleteModal}
-          onDeleteClick={() => handleDeleteInvoice()}
-          onCloseClick={() => setDeleteModal(false)}
-        />
-        <DeleteModal
-          show={deleteModalMulti}
-          onDeleteClick={() => {
-            deleteMultiple();
-            setDeleteModalMulti(false);
-          }}
-          onCloseClick={() => setDeleteModalMulti(false)}
-        />
+        <Modal isOpen={deleteModal} toggle={() => setDeleteModal(false)}>
+          <ModalHeader toggle={() => setDeleteModal(false)}>Confirm Delete</ModalHeader>
+          <ModalBody>
+            Are you sure you want to delete this user?
+          </ModalBody>
+          <ModalFooter>
+            <Button color="danger" onClick={handleDeleteMember}>Delete</Button>{' '}
+            <Button color="secondary" onClick={() => setDeleteModal(false)}>Cancel</Button>
+          </ModalFooter>
+        </Modal>
+
+        <Modal isOpen={editModal} toggle={() => setEditModal(false)}>
+          <ModalHeader toggle={() => setEditModal(false)}>Edit Member</ModalHeader>
+          <ModalBody>
+            {selectedMember && (
+              <Form>
+                <FormGroup>
+                  <Label for="firstname">First Name</Label>
+                  <Input
+                    type="text"
+                    id="firstname"
+                    value={selectedMember.firstname}
+                    onChange={e => setSelectedMember({ ...selectedMember, firstname: e.target.value })}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label for="lastname">Last Name</Label>
+                  <Input
+                    type="text"
+                    id="lastname"
+                    value={selectedMember.lastname}
+                    onChange={e => setSelectedMember({ ...selectedMember, lastname: e.target.value })}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label for="phone">Phone</Label>
+                  <Input
+                    type="text"
+                    id="phone"
+                    value={selectedMember.phone}
+                    onChange={e => setSelectedMember({ ...selectedMember, phone: e.target.value })}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label for="email">Email</Label>
+                  <Input
+                    type="email"
+                    id="email"
+                    value={selectedMember.email}
+                    onChange={e => setSelectedMember({ ...selectedMember, email: e.target.value })}
+                  />
+                </FormGroup>
+              </Form>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button color="primary" onClick={handleEditMember}>Save</Button>{' '}
+            <Button color="secondary" onClick={() => setEditModal(false)}>Cancel</Button>
+          </ModalFooter>
+        </Modal>
+
         <Container fluid>
           <BreadCrumb title="Member List" pageTitle="Member" />
-          {/* <Row>
-            {invoiceWidgets.map((invoicewidget, key) => (
-              <React.Fragment key={key}>
-                <Col xl={3} md={6}>
-                  <Card className="card-animate">
-                    <CardBody>
-                      <div className="d-flex align-items-center">
-                        <div className="flex-grow-1">
-                          <p className="text-uppercase fw-medium text-muted mb-0">
-                            {invoicewidget.label}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <h5
-                            className={
-                              "fs-14 mb-0 text-" + invoicewidget.percentageClass
-                            }
-                          >
-                            <i className="ri-arrow-right-up-line fs-13 align-middle"></i>{" "}
-                            {invoicewidget.percentage}
-                          </h5>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-end justify-content-between mt-4">
-                        <div>
-                          <h4 className="fs-22 fw-semibold ff-secondary mb-4">
-                            <CountUp
-                              start={0}
-                              prefix={invoicewidget.prefix}
-                              suffix={invoicewidget.suffix}
-
-                              end={invoicewidget.counter}
-                              duration={4}
-                              className="counter-value"
-                            />
-                          </h4>
-                          <span className="badge bg-warning me-1">
-                            {invoicewidget.badge}
-                          </span>{" "}
-                          <span className="text-muted">
-                            {" "}
-                            {invoicewidget.caption}
-                          </span>
-                        </div>
-                        <div className="avatar-sm flex-shrink-0">
-                          <span className="avatar-title bg-light rounded fs-3">
-                            <FeatherIcon
-                              icon={invoicewidget.feaIcon}
-                              className="text-success icon-dual-success"
-                            />
-                          </span>
-                        </div>
-                      </div>
-                    </CardBody>
-                  </Card>
-                </Col>
-              </React.Fragment>
-            ))}
-          </Row> */}
-
           <Row>
             <Col lg={12}>
-              <Card id="invoiceList">
+              <Card id="memberList">
                 <CardHeader className="border-0">
                   <div className="d-flex align-items-center">
-                    <h5 className="card-title mb-0 flex-grow-1">Invoices</h5>
+                    <h5 className="card-title mb-0 flex-grow-1">Members</h5>
                     <div className="flex-shrink-0">
                       <div className="d-flex gap-2 flex-wrap">
-                        {isMultiDeleteButton && <button className="btn btn-primary me-1"
-                          onClick={() => setDeleteModalMulti(true)}
-                        ><i className="ri-delete-bin-2-line"></i></button>}
-                        <Link
-                          to="/apps-invoices-create"
-                          className="btn btn-danger"
-                        >
-                          <i className="ri-add-line align-bottom me-1"></i> Create
-                          Order
+                        {isMultiDeleteButton && (
+                          <button
+                            className="btn btn-primary me-1"
+                            onClick={() => setDeleteModal(true)}
+                          >
+                            <i className="ri-delete-bin-2-line"></i>
+                          </button>
+                        )}
+                        <Link to="/register" className="btn btn-danger">
+                          <i className="ri-add-line align-bottom me-1"></i>{" "}
+                          Create Member
                         </Link>
                       </div>
                     </div>
@@ -381,18 +400,19 @@ const Member = () => {
                 </CardHeader>
                 <CardBody className="pt-0">
                   <div>
-                    {isInvoiceSuccess && invoices.length ? (
+                    {members.length > 0 ? (
                       <TableContainer
                         columns={columns}
-                        data={(invoices || [])}
+                        data={members}
                         isGlobalFilter={true}
                         customPageSize={10}
                         isInvoiceListFilter={true}
                         theadClass="text-muted text-uppercase"
-                        SearchPlaceholder='Search for customer, email, country, status or something...'
+                        SearchPlaceholder="Search for member, email, country, status or something..."
                       />
-                    ) : (<Loader error={error} />)
-                    }
+                    ) : (
+                      <div>No members found</div>
+                    )}
                     <ToastContainer closeButton={false} limit={1} />
                   </div>
                 </CardBody>
