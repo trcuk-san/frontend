@@ -28,8 +28,9 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createSelector } from "reselect";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteUser, updateUser } from "services/auth"; // Ensure updateUser is imported
+import { deleteUser, updateUser } from "services/auth";
 import DeleteModal from "Components/Common/DeleteModal";
+import "./Member.css"; // Import CSS
 
 interface IMember {
   _id: string;
@@ -201,30 +202,6 @@ const Member: React.FC = () => {
   const columns = useMemo(
     () => [
       {
-        header: (
-          <input
-            type="checkbox"
-            id="checkBoxAll"
-            className="form-check-input"
-            onClick={() => checkedAll()}
-          />
-        ),
-        cell: (cell: any) => {
-          return (
-            <input
-              type="checkbox"
-              className="memberCheckBox form-check-input"
-              value={cell.getValue()}
-              onChange={() => deleteCheckbox()}
-            />
-          );
-        },
-        id: "#",
-        accessorKey: "_id",
-        enableColumnFilter: false,
-        enableSorting: false,
-      },
-      {
         header: "No.",
         accessorKey: "_id",
         enableColumnFilter: false,
@@ -376,7 +353,7 @@ const Member: React.FC = () => {
           <BreadCrumb title="Member List" pageTitle="Member" />
           <Row>
             <Col lg={12}>
-              <Card id="memberList">
+              <Card id="memberList" className="hide-checkbox hide-select-and-filters">
                 <CardHeader className="border-0">
                   <div className="d-flex align-items-center">
                     <h5 className="card-title mb-0 flex-grow-1">Members</h5>
@@ -406,7 +383,7 @@ const Member: React.FC = () => {
                         data={members}
                         isGlobalFilter={true}
                         customPageSize={10}
-                        isInvoiceListFilter={true}
+                        isInvoiceListFilter={false}
                         theadClass="text-muted text-uppercase"
                         SearchPlaceholder="Search for member, email, country, status or something..."
                       />

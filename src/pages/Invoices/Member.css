@@ -1,0 +1,9 @@
+.hide-checkbox .form-check-input {
+    display: none;
+  }
+  
+  .hide-select-and-filters .custom-select,
+  .hide-select-and-filters .date-filter,
+  .hide-select-and-filters .filters {
+    display: none !important;
+  }
