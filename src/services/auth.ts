@@ -44,3 +44,14 @@ export const getProfile = async (userId: string) => {
   }
 };
 
+
+export const listUser = async () => {
+  try {
+    const res = await axios.get('/auth/users');
+    console.log('res listUser', res.data);
+    return res.data.data;  // Ensure returning the actual data
+  } catch (error: any) {  // Explicitly type error as any
+    console.error('Error fetching users:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+};

@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+const API_BASE_URL = 'http://localhost:4000';
 interface Ivehicle {
   vehicleId: string;
   vehicleStatus: string;
@@ -18,9 +19,14 @@ export const createVehicle = async (body: Ivehicle) => {
 };
 
 export const listVehicle = async () => {
-  const res = await axios.get('/vehicle/listVehicle');
-  // console.log('res', res);
-  return res;
+  try {
+    const res = await axios.get('/vehicle/listVehicle');
+    console.log('res listVehicle', res.data);
+    return res.data.data;  // Ensure returning the actual data
+  } catch (error: any) {  // Explicitly type error as any
+    console.error('Error fetching vehicles:', error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
 export const getVehicle = async (vehicleId: any) => {
