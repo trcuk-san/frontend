@@ -49,7 +49,7 @@ import CrmLeads from "../pages/Crm/CrmLeads/index";
 // //Invoices
 import OrderPage from "../pages/Invoices/OrderPage";
 import Order from "../pages/Invoices/List";
-import Car from "../pages/Invoices/List1";
+import Car from "../pages/Invoices/CarList";
 import Member from "../pages/Invoices/List2";
 import Invoices1 from "../pages/Invoices/List4";
 import Invoices from "../pages/Invoices/List3";
@@ -248,7 +248,8 @@ import ToDoList from "../pages/ToDo";
 import UiLink from "../pages/BaseUi/UiLinks/UiLinks";
 import Kanbanboard from "pages/Tasks/KanbanBoard";
 
-// import Testaxios from "../pages/Test/Testaxios";
+// // Project
+import CarCreate from "pages/Invoices/CarCreate";
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <DashboardEcommerce /> },
@@ -480,6 +481,7 @@ const publicRoutes = [
   { path: "/login", component: <Login /> },
   { path: "/forgot-password", component: <ForgetPasswordPage /> },
   { path: "/register", component: <Register /> },
+  { path: "/car-create", component: <CarCreate /> },
 
   // //AuthenticationInner pages
   { path: "/auth-signin-basic", component: <BasicSignIn /> },
@@ -514,8 +516,6 @@ const publicRoutes = [
   { path: "/order", component: <OrderPage /> }, // เพิ่มหน้า OrderPage ที่ไม่ต้องการตรวจสอบสิทธิ์
   { path: "/", exact: true, component: <Navigate to="/dashboard" /> },
   { path: "*", component: <Navigate to="/dashboard" /> },
-
-  // { path: "/testtest", component: <Testaxios /> },
 ];
 
 export { authProtectedRoutes, publicRoutes };

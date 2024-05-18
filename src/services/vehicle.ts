@@ -5,12 +5,14 @@ interface Ivehicle {
   vehicleStatus: string;
   remarks: string;
 }
+
 interface IUpdatevehicle {
   _id: string;
   vehicleId: string;
   vehicleStatus: string;
   remarks: string;
 }
+
 export const createVehicle = async (body: Ivehicle) => {
   const res = await axios.post('/vehicle/createVehicle', body);
   console.log('res createVehicle ', res);
