@@ -40,27 +40,27 @@ const OrderPage: React.FC = () => {
               <Table className="table mb-0">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Vehicle</th>
-                    <th>Driver</th>
-                    <th>Pick Up</th>
-                    <th>Drop Off</th>
-                    <th>Consumer</th>
-                    <th>Remark</th>
+                    <th>No.</th>
+                    <th>วันที่</th>
+                    <th>เวลา</th>
+                    <th>ทะเบียน</th>
+                    <th>คนขับรถ</th>
+                    <th>สถานที่รับ</th>
+                    <th>สถานที่ส่ง</th>
+                    <th>ลูกค้า</th>
+                    <th>หมายเหตุ</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order) => (
+                  {orders.map((order, index) => (
                     <tr key={order._id}>
-                      <td>{order._id}</td>
+                      <td>{index + 1}</td>
                       <td>{order.date}</td>
                       <td>{order.time}</td>
                       <td>{order.vehicle}</td>
                       <td>{order.driver}</td>
                       <td>{order.pick_up}</td>
-                      <td>{order.drop_off.join(', ')}</td>
+                      <td>{order.drop_off.join(", ")}</td>
                       <td>{order.consumer}</td>
                       <td>{order.remark}</td>
                     </tr>

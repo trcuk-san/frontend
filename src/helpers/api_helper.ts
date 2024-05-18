@@ -44,6 +44,7 @@ axios.interceptors.response.use(
  * Sets the default authorization
  * @param {*} token
  */
+
 const setAuthorization = (token: string) => {
   axios.defaults.headers.common["Authorization"] = "Bearer " + token;
 };
@@ -99,7 +100,7 @@ class APIClient {
 }
 
 const getLoggedinUser = () => {
-  const user = sessionStorage.getItem("authUser");
+  const user = localStorage.getItem("token");
   if (!user) {
     return null;
   } else {
