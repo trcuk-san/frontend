@@ -30,7 +30,6 @@ import { createSelector } from "reselect";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteUser, updateUser } from "services/auth";
 import DeleteModal from "Components/Common/DeleteModal";
-import "./Member.css"; // Import CSS
 
 interface IMember {
   _id: string;
@@ -44,7 +43,7 @@ interface IMember {
 const Member: React.FC = () => {
   const [members, setMembers] = useState<IMember[]>([]);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
-  const [editModal, setEditModal] = useState<boolean>(false); // Add state for edit modal
+  const [editModal, setEditModal] = useState<boolean>(false);
   const [selectedMember, setSelectedMember] = useState<IMember | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
@@ -287,6 +286,19 @@ const Member: React.FC = () => {
 
   return (
     <React.Fragment>
+      <style>
+        {`
+          .hide-checkbox .form-check-input {
+            display: none;
+          }
+
+          .hide-select-and-filters .custom-select,
+          .hide-select-and-filters .date-filter,
+          .hide-select-and-filters .filters {
+            display: none !important;
+          }
+        `}
+      </style>
       <div className="page-content">
         <Modal isOpen={deleteModal} toggle={() => setDeleteModal(false)}>
           <ModalHeader toggle={() => setDeleteModal(false)}>Confirm Delete</ModalHeader>
