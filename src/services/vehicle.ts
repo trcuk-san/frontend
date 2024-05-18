@@ -20,15 +20,21 @@ export const createVehicle = async (body: Ivehicle) => {
   return res;
 };
 
+// export const listVehicle = async () => {
+//   try {
+//     const res = await axios.get('/vehicle/listVehicle');
+//     console.log('res listVehicle', res.data);
+//     return res.data.data;  // Ensure returning the actual data
+//   } catch (error: any) {  // Explicitly type error as any
+//     console.error('Error fetching vehicles:', error.response ? error.response.data : error.message);
+//     throw error;
+//   }
+// };
+
 export const listVehicle = async () => {
-  try {
-    const res = await axios.get('/vehicle/listVehicle');
-    console.log('res listVehicle', res.data);
-    return res.data.data;  // Ensure returning the actual data
-  } catch (error: any) {  // Explicitly type error as any
-    console.error('Error fetching vehicles:', error.response ? error.response.data : error.message);
-    throw error;
-  }
+  const res = await axios.get('/vehicle/listVehicle');
+  // console.log('res', res);
+  return res;
 };
 
 export const getVehicle = async (vehicleId: any) => {
