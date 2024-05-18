@@ -76,9 +76,9 @@ const Navdata = () => {
             }
         },{
             id: "invoices1",
-            label: "Invoices1",
+            label: "create",
             icon: "ri-archive-2-line",
-            link: "/invoices1",
+            link: "/apps-invoices-create",
             click: function (e: any) {
                 e.preventDefault();
              

@@ -1,50 +1,62 @@
 import axios from 'axios';
 
-interface IOrder {
-  date: String;
-  time: string;
-  vehicle: string;
-  driver: string;
-  pick_up: string;
-  drop_off:[string];
-  consumer: string;
-  remark: string;
-}
-interface IUpdateOrder {
-  _id: string;
-  date: String;
-  time: string;
-  vehicle: string;
-  driver: string;
-  pick_up: string;
-  drop_off:[string];
-  consumer: string;
-  remark: string;
-}
-export const createOrder = async (body: IOrder) => {
-  const res = await axios.post('/order/createOrder', body);
-  console.log('res createOrder ', res);
-  return res;
+const API_BASE_URL = 'http://localhost:4000';
+
+export const setAuthorization = (token: string) => {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 };
+
+export interface IOrder {
+  datePickUp: string;
+  timePickUp: string;
+  dateDropOff: string;
+  timeDropOff: string;
+  vehicle: string;
+  driver: string;
+  pick_up: string;
+  drop_off: string[];
+  consumer: string;
+  income: string;
+  oilFee: string;
+  tollwayFee: string;
+  otherFee: string;
+  remark: string;
+}
+
+export const createOrder = async (body: IOrder) => {
+  try {
+    const res = await axios.post(`${API_BASE_URL}/order/createOrder`, body);
+    console.log('res createOrder', res);
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Error creating order:', error.response ? error.response.data : error.message);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
 
 export const listOrder = async () => {
-  const res = await axios.get('/order/listOrder');
-  // console.log('res', res);
+  const res = await axios.get('http://localhost:4000/order/listOrder');
+  console.log('res', res);
   return res;
 };
 
-export const getorder = async (orderId: any) => {
-  const res = await axios.get('/toilet/getOrder', {params: {_id: orderId},});
+export const getOrder = async (orderId: string) => {
+  const res = await axios.get('http://localhost:4000/order/getOrder', { params: { _id: orderId } });
   return res;
 };
 
-export const updateOrder = async (body: IUpdateOrder) => {
-  const res = await axios.put('/order/updateOrder', body);
-  console.log('res  updateOrder ', res);
+export const updateOrder = async (body: IOrder) => {
+  const res = await axios.put('http://localhost:4000/order/updateOrder', body);
+  console.log('res updateOrder ', res);
   return res;
 };
 
-export const deleteOrder = async (orderId: any) => {
-  const res = await axios.delete('/order/deleteOrder', {params: {_id: orderId}});
+export const deleteOrder = async (orderId: string) => {
+  const res = await axios.delete('http://localhost:4000/order/deleteOrder', { params: { _id: orderId } });
   return res;
 };
