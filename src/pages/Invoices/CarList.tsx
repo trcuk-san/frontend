@@ -209,7 +209,7 @@ const Car = () => {
         enableColumnFilter: false,
         cell: (cell: any) => {
           switch (cell.getValue()) {
-            case "Paid":
+            case "":
               return (
                 <span className="badge text-uppercase bg-success-subtle text-success">
                   {" "}

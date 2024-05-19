@@ -18,7 +18,6 @@ import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import DeleteModal from "../../Components/Common/DeleteModal";
 
-
 //Import Icons
 import FeatherIcon from "feather-icons-react";
 import { invoiceWidgets } from "../../common/data/invoiceList";
@@ -34,11 +33,34 @@ import { useSelector, useDispatch } from "react-redux";
 
 import Loader from "../../Components/Common/Loader";
 
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { createSelector } from "reselect";
+import { Form } from "formik";
 
-const Invoices = () => {
+import { createInvoice, listInvoice } from "../../services/invoices";
+
+interface Iinvoice {
+  customer: string;
+  address: string;
+  listorderId: string[];
+}
+
+const InvoicesList = () => {
+  const [invoices, setInvoices] = useState<Iinvoice[]>([]);
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const response = await listInvoice();
+        setInvoices(response.data);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+
+    fetchCars();
+  }, []);
+
   const dispatch: any = useDispatch();
 
   const selectLayoutState = (state: any) => state.Invoice;
@@ -50,13 +72,6 @@ const Invoices = () => {
       error: state.error,
     })
   );
-
-  
-  // Inside your component
-  const {
-    invoices, isInvoiceSuccess, error
-  } = useSelector(selectinvoiceProperties);
-
 
   //delete invoice
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
@@ -87,7 +102,6 @@ const Invoices = () => {
     }
   };
 
-
   const handleValidDate = (date: any) => {
     const date1 = moment(new Date(date)).format("DD MMM Y");
     return date1;
@@ -104,7 +118,8 @@ const Invoices = () => {
     } else {
       meridiem = "AM";
     }
-    const updateTime = moment(getTime, 'hh:mm').format('hh:mm') + " " + meridiem;
+    const updateTime =
+      moment(getTime, "hh:mm").format("hh:mm") + " " + meridiem;
     return updateTime;
   };
 
@@ -127,13 +142,16 @@ const Invoices = () => {
 
   // Delete Multiple
   const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState([]);
-  const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
+  const [isMultiDeleteButton, setIsMultiDeleteButton] =
+    useState<boolean>(false);
 
   const deleteMultiple = () => {
     const checkall: any = document.getElementById("checkBoxAll");
     selectedCheckBoxDelete.forEach((element: any) => {
       dispatch(onDeleteInvoice(element.value));
-      setTimeout(() => { toast.clearWaitingQueue(); }, 3000);
+      setTimeout(() => {
+        toast.clearWaitingQueue();
+      }, 3000);
     });
     setIsMultiDeleteButton(false);
     checkall.checked = false;
@@ -141,7 +159,9 @@ const Invoices = () => {
 
   const deleteCheckbox = () => {
     const ele: any = document.querySelectorAll(".invoiceCheckBox:checked");
-    ele.length > 0 ? setIsMultiDeleteButton(true) : setIsMultiDeleteButton(false);
+    ele.length > 0
+      ? setIsMultiDeleteButton(true)
+      : setIsMultiDeleteButton(false);
     setSelectedCheckBoxDelete(ele);
   };
 
@@ -149,11 +169,25 @@ const Invoices = () => {
   const columns = useMemo(
     () => [
       {
-        header: <input type="checkbox" id="checkBoxAll" className="form-check-input" onClick={() => checkedAll()} />,
+        header: (
+          <input
+            type="checkbox"
+            id="checkBoxAll"
+            className="form-check-input"
+            onClick={() => checkedAll()}
+          />
+        ),
         cell: (cell: any) => {
-          return <input type="checkbox" className="invoiceCheckBox form-check-input" value={cell.getValue()} onChange={() => deleteCheckbox()} />;
+          return (
+            <input
+              type="checkbox"
+              className="invoiceCheckBox form-check-input"
+              value={cell.getValue()}
+              onChange={() => deleteCheckbox()}
+            />
+          );
         },
-        id: '#',
+        id: "#",
         accessorKey: "_id",
         enableColumnFilter: false,
         enableSorting: false,
@@ -163,79 +197,81 @@ const Invoices = () => {
         accessorKey: "invoiceId",
         enableColumnFilter: false,
         cell: (cell: any) => {
-          return <Link to="/apps-invoices-details" className="fw-medium link-primary">{cell.getValue()}</Link>;
+          return (
+            <Link
+              to="/apps-invoices-details"
+              className="fw-medium link-primary"
+            >
+              {cell.getValue()}
+            </Link>
+          );
         },
       },
       {
-        header: "Customer",
-        accessorKey: "name",
-        enableColumnFilter: false,
-        cell: (cell: any) => (
-          <>
-            <div className="d-flex align-items-center">
-              {cell.row.original.img ? <img
-                src={process.env.REACT_APP_API_URL + "/images/users/" + cell.row.original.img}
-                alt=""
-                className="avatar-xs rounded-circle me-2"
-              /> :
-                <div className="flex-shrink-0 avatar-xs me-2">
-                  <div className="avatar-title bg-success-subtle text-success rounded-circle fs-13">
-                    {cell.row.original.name.charAt(0) + cell.row.original.name.split(" ").slice(-1).toString().charAt(0)}
-                  </div>
-                </div>}
-              {cell.getValue()}
-            </div>
-          </>
-        ),
-      },
-      {
-        header: "EMAIL",
-        accessorKey: "email",
+        header: "ลูกค้า",
+        accessorKey: "customer",
         enableColumnFilter: false,
       },
       {
-        header: "COUNTRY",
-        accessorKey: "country",
-        enableColumnFilter: false,
-      },
-      {
-        header: "DATE",
-        accessorKey: "date",
+        header: "วันที่",
+        accessorKey: "updatedAt",
         enableColumnFilter: false,
         cell: (cell: any) => (
           <>
             {handleValidDate(cell.getValue())},{" "}
-            <small className="text-muted">{handleValidTime(cell.getValue())}</small>
+            <small className="text-muted">
+              {handleValidTime(cell.getValue())}
+            </small>
           </>
         ),
       },
       {
-        header: "AMOUNT",
+        header: "ยอดรวม",
         accessorKey: "amount",
         enableColumnFilter: false,
       },
       {
-        header: "PAYMENT STATUS",
-        accessorKey: "status",
+        header: "สถานะการจ่าย",
+        accessorKey: "invoicestatus",
         enableColumnFilter: false,
         cell: (cell: any) => {
           switch (cell.getValue()) {
-            case "Paid":
-              return <span className="badge text-uppercase bg-success-subtle text-success"> {cell.getValue()} </span>;
-            case "Unpaid":
-              return <span className="badge text-uppercase bg-warning-subtle text-warning"> {cell.getValue()} </span>;
+            case false:
+              return (
+                <span className="badge text-uppercase bg-success-subtle text-success">
+                  {" "}
+                  Unpaid{" "}
+                </span>
+              );
+            case true:
+              return (
+                <span className="badge text-uppercase bg-warning-subtle text-warning">
+                  {" "}
+                  Paid{" "}
+                </span>
+              );
             case "Cancel":
-              return <span className="badge text-uppercase bg-danger-subtle text-danger"> {cell.getValue()} </span>;
+              return (
+                <span className="badge text-uppercase bg-danger-subtle text-danger">
+                  {" "}
+                  {cell.getValue()}{" "}
+                </span>
+              );
             default:
-              return <span className="badge text-uppercase bg-primary-subtle text-primary"> {cell.getValue()} </span>;
+              return (
+                <span className="badge text-uppercase bg-primary-subtle text-primary">
+                  {" "}
+                  {cell.getValue()}{" "}
+                </span>
+              );
           }
-        }
+        },
       },
       {
         header: "Action",
         cell: (cellProps: any) => {
           return (
-            <UncontrolledDropdown >
+            <UncontrolledDropdown>
               <DropdownToggle
                 href="#"
                 className="btn btn-soft-secondary btn-sm dropdown"
@@ -263,7 +299,10 @@ const Invoices = () => {
 
                 <DropdownItem
                   href="#"
-                  onClick={() => { const invoiceData = cellProps.row.original; onClickDelete(invoiceData); }}
+                  onClick={() => {
+                    const invoiceData = cellProps.row.original;
+                    onClickDelete(invoiceData);
+                  }}
                 >
                   <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i>{" "}
                   Delete
@@ -297,66 +336,6 @@ const Invoices = () => {
         />
         <Container fluid>
           <BreadCrumb title="Invoices List" pageTitle="Invoices" />
-          {/* <Row>
-            {invoiceWidgets.map((invoicewidget, key) => (
-              <React.Fragment key={key}>
-                <Col xl={3} md={6}>
-                  <Card className="card-animate">
-                    <CardBody>
-                      <div className="d-flex align-items-center">
-                        <div className="flex-grow-1">
-                          <p className="text-uppercase fw-medium text-muted mb-0">
-                            {invoicewidget.label}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <h5
-                            className={
-                              "fs-14 mb-0 text-" + invoicewidget.percentageClass
-                            }
-                          >
-                            <i className="ri-arrow-right-up-line fs-13 align-middle"></i>{" "}
-                            {invoicewidget.percentage}
-                          </h5>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-end justify-content-between mt-4">
-                        <div>
-                          <h4 className="fs-22 fw-semibold ff-secondary mb-4">
-                            <CountUp
-                              start={0}
-                              prefix={invoicewidget.prefix}
-                              suffix={invoicewidget.suffix}
-
-                              end={invoicewidget.counter}
-                              duration={4}
-                              className="counter-value"
-                            />
-                          </h4>
-                          <span className="badge bg-warning me-1">
-                            {invoicewidget.badge}
-                          </span>{" "}
-                          <span className="text-muted">
-                            {" "}
-                            {invoicewidget.caption}
-                          </span>
-                        </div>
-                        <div className="avatar-sm flex-shrink-0">
-                          <span className="avatar-title bg-light rounded fs-3">
-                            <FeatherIcon
-                              icon={invoicewidget.feaIcon}
-                              className="text-success icon-dual-success"
-                            />
-                          </span>
-                        </div>
-                      </div>
-                    </CardBody>
-                  </Card>
-                </Col>
-              </React.Fragment>
-            ))}
-          </Row> */}
-
           <Row>
             <Col lg={12}>
               <Card id="invoiceList">
@@ -365,15 +344,17 @@ const Invoices = () => {
                     <h5 className="card-title mb-0 flex-grow-1">Invoices</h5>
                     <div className="flex-shrink-0">
                       <div className="d-flex gap-2 flex-wrap">
-                        {isMultiDeleteButton && <button className="btn btn-primary me-1"
-                          onClick={() => setDeleteModalMulti(true)}
-                        ><i className="ri-delete-bin-2-line"></i></button>}
-                        <Link
-                          to="/apps-invoices-create"
-                          className="btn btn-danger"
-                        >
-                          <i className="ri-add-line align-bottom me-1"></i> Create
-                          Order
+                        {isMultiDeleteButton && (
+                          <button
+                            className="btn btn-primary me-1"
+                            onClick={() => setDeleteModalMulti(true)}
+                          >
+                            <i className="ri-delete-bin-2-line"></i>
+                          </button>
+                        )}
+                        <Link to="/invoice-create" className="btn btn-danger">
+                          <i className="ri-add-line align-bottom me-1"></i>{" "}
+                          Create Invoice
                         </Link>
                       </div>
                     </div>
@@ -381,18 +362,19 @@ const Invoices = () => {
                 </CardHeader>
                 <CardBody className="pt-0">
                   <div>
-                    {isInvoiceSuccess && invoices.length ? (
-                      <TableContainer
-                        columns={columns}
-                        data={(invoices || [])}
-                        isGlobalFilter={true}
-                        customPageSize={10}
-                        isInvoiceListFilter={true}
-                        theadClass="text-muted text-uppercase"
-                        SearchPlaceholder='Search for customer, email, country, status or something...'
-                      />
-                    ) : (<Loader error={error} />)
-                    }
+                    {/* {isInvoiceSuccess && invoices.length ? ( */}
+                    <TableContainer
+                      columns={columns}
+                      data={invoices || []}
+                      isGlobalFilter={true}
+                      customPageSize={10}
+                      isInvoiceListFilter={true}
+                      theadClass="text-muted text-uppercase"
+                      SearchPlaceholder="Search for customer, email, country, status or something..."
+                    />
+                    {/* ) : (
+                      <Loader error={error} />
+                    )} */}
                     <ToastContainer closeButton={false} limit={1} />
                   </div>
                 </CardBody>
@@ -405,4 +387,4 @@ const Invoices = () => {
   );
 };
 
-export default Invoices;
+export default InvoicesList;
