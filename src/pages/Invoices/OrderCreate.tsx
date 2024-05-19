@@ -1,27 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Label, Input, Form, Alert } from 'reactstrap';
-import BreadCrumb from 'Components/Common/BreadCrumb';
-import { createOrder, IOrder } from '../../services/order';
-import { setAuthorization } from '../../services/order';
-import avatar from "../../assets/images/users/avatar-1.jpg";  // If you need this for any purpose
+import React, { useState, useEffect } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Button,
+  Label,
+  Input,
+  Form,
+  Alert,
+} from "reactstrap";
+import BreadCrumb from "Components/Common/BreadCrumb";
+import { createOrder, IOrder } from "../../services/order";
+import { setAuthorization } from "../../services/order";
+import avatar from "../../assets/images/users/avatar-1.jpg"; // If you need this for any purpose
 
-const Create = () => {
-  const [dropOffLocations, setDropOffLocations] = useState([{ id: 1, value: '' }]);
+const OrderCreate = () => {
+  const [dropOffLocations, setDropOffLocations] = useState([
+    { id: 1, value: "" },
+  ]);
   const [formState, setFormState] = useState<IOrder>({
-    datePickUp: '',
-    timePickUp: '',
-    dateDropOff: '',
-    timeDropOff: '',
-    vehicle: '',
-    driver: '',
-    pick_up: '',
-    drop_off: [''],
-    consumer: '',
-    income: '',
-    oilFee: '',
-    tollwayFee: '',
-    otherFee: '',
-    remark: '',
+    datePickUp: "",
+    timePickUp: "",
+    dateDropOff: "",
+    timeDropOff: "",
+    vehicle: "",
+    driver: "",
+    pick_up: "",
+    drop_off: [""],
+    consumer: "",
+    income: "",
+    oilFee: "",
+    tollwayFee: "",
+    otherFee: "",
+    remark: "",
   });
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -39,35 +50,40 @@ const Create = () => {
       setAuthorization(token);
 
       try {
-        const vehicleResponse = await fetch('http://localhost:4000/vehicle/listVehicle', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const userResponse = await fetch('http://localhost:4000/auth/users', {
+        const vehicleResponse = await fetch(
+          "http://localhost:4000/vehicle/listVehicle",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const userResponse = await fetch("http://localhost:4000/auth/users", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         if (!vehicleResponse.ok || !userResponse.ok) {
-          throw new Error('Failed to fetch vehicles or drivers');
+          throw new Error("Failed to fetch vehicles or drivers");
         }
 
         const vehicleData = await vehicleResponse.json();
         const userData = await userResponse.json();
 
-        console.log('Fetched vehicles:', JSON.stringify(vehicleData, null, 2));
-        console.log('Fetched users:', JSON.stringify(userData, null, 2));
+        console.log("Fetched vehicles:", JSON.stringify(vehicleData, null, 2));
+        console.log("Fetched users:", JSON.stringify(userData, null, 2));
 
-        const filteredVehicles = vehicleData.data.filter((vehicle: any) => vehicle.vehicleStatus === 'true');
+        const filteredVehicles = vehicleData.data.filter(
+          (vehicle: any) => vehicle.vehicleStatus === "OK"
+        );
         setVehicles(filteredVehicles);
         setDrivers(userData.data);
-        console.log('Filtered vehicles:', filteredVehicles);
-        console.log('Drivers set:', userData.data);
+        console.log("Filtered vehicles:", filteredVehicles);
+        console.log("Drivers set:", userData.data);
       } catch (error: any) {
-        console.error('Error fetching vehicles or drivers:', error.message);
-        setError('Error fetching vehicles or drivers');
+        console.error("Error fetching vehicles or drivers:", error.message);
+        setError("Error fetching vehicles or drivers");
       }
     };
 
@@ -76,16 +92,20 @@ const Create = () => {
 
   const handleAddDropOff = () => {
     const newId = dropOffLocations.length + 1;
-    setDropOffLocations([...dropOffLocations, { id: newId, value: '' }]);
+    setDropOffLocations([...dropOffLocations, { id: newId, value: "" }]);
     setFormState({
       ...formState,
-      drop_off: [...formState.drop_off, ''],
+      drop_off: [...formState.drop_off, ""],
     });
   };
 
   const handleDeleteDropOff = (id: number) => {
-    const updatedLocations = dropOffLocations.filter((location) => location.id !== id);
-    const updatedDropOff = formState.drop_off.filter((_, index) => index !== id - 1);
+    const updatedLocations = dropOffLocations.filter(
+      (location) => location.id !== id
+    );
+    const updatedDropOff = formState.drop_off.filter(
+      (_, index) => index !== id - 1
+    );
     setDropOffLocations(updatedLocations);
     setFormState({
       ...formState,
@@ -98,8 +118,9 @@ const Create = () => {
     id?: number
   ) => {
     if (id !== undefined) {
-      const updatedDropOff = formState.drop_off.map((value: string, index: number) =>
-        index === id ? e.target.value : value
+      const updatedDropOff = formState.drop_off.map(
+        (value: string, index: number) =>
+          index === id ? e.target.value : value
       );
       setFormState({
         ...formState,
@@ -118,13 +139,13 @@ const Create = () => {
     e.preventDefault();
     try {
       const response = await createOrder(formState);
-      console.log('Order created successfully:', response);
-      setSuccess('Order created successfully');
+      console.log("Order created successfully:", response);
+      setSuccess("Order created successfully");
       setError(null);
       // Handle success, e.g., navigate to the order list or show a success message
     } catch (error: any) {
-      console.error('Error creating order:', error.message);
-      setError('Error creating order');
+      console.error("Error creating order:", error.message);
+      setError("Error creating order");
       setSuccess(null);
       // Handle error, e.g., show an error message
     }
@@ -140,7 +161,9 @@ const Create = () => {
           <Row>
             <Col md={5}>
               <div>
-                <Label htmlFor="datePickUp" className="form-label">วันที่รับ</Label>
+                <Label htmlFor="datePickUp" className="form-label">
+                  วันที่รับ
+                </Label>
                 <Input
                   type="date"
                   className="form-control"
@@ -153,7 +176,9 @@ const Create = () => {
             </Col>
             <Col md={5}>
               <div>
-                <Label htmlFor="timePickUp" className="form-label">เวลาที่รับ</Label>
+                <Label htmlFor="timePickUp" className="form-label">
+                  เวลาที่รับ
+                </Label>
                 <Input
                   type="time"
                   className="form-control"
@@ -166,7 +191,9 @@ const Create = () => {
             </Col>
             <Col md={5}>
               <div>
-                <Label htmlFor="dateDropOff" className="form-label">วันที่ส่ง</Label>
+                <Label htmlFor="dateDropOff" className="form-label">
+                  วันที่ส่ง
+                </Label>
                 <Input
                   type="date"
                   className="form-control"
@@ -179,7 +206,9 @@ const Create = () => {
             </Col>
             <Col md={5}>
               <div>
-                <Label htmlFor="timeDropOff" className="form-label">เวลาที่ส่ง</Label>
+                <Label htmlFor="timeDropOff" className="form-label">
+                  เวลาที่ส่ง
+                </Label>
                 <Input
                   type="time"
                   className="form-control"
@@ -192,7 +221,9 @@ const Create = () => {
             </Col>
             <Row>
               <Col md={5}>
-                <Label htmlFor="vehicle" className="form-label">รถ</Label>
+                <Label htmlFor="vehicle" className="form-label">
+                  รถ
+                </Label>
                 <Input
                   type="select"
                   className="form-select rounded-pill mb-3"
@@ -203,12 +234,16 @@ const Create = () => {
                 >
                   <option value="">Select your vehicle</option>
                   {vehicles.map((vehicle: any) => (
-                    <option key={vehicle._id} value={vehicle._id}>{vehicle.vehicleId}</option>
+                    <option key={vehicle._id} value={vehicle._id}>
+                      {vehicle.vehicleId}
+                    </option>
                   ))}
                 </Input>
               </Col>
               <Col md={5}>
-                <Label htmlFor="driver" className="form-label">คนขับ</Label>
+                <Label htmlFor="driver" className="form-label">
+                  คนขับ
+                </Label>
                 <Input
                   type="select"
                   className="form-select rounded-pill mb-3"
@@ -219,14 +254,18 @@ const Create = () => {
                 >
                   <option value="">Search for driver</option>
                   {drivers.map((driver: any) => (
-                    <option key={driver._id} value={driver._id}>{driver.firstname} {driver.lastname}</option>
+                    <option key={driver._id} value={driver._id}>
+                      {driver.firstname} {driver.lastname}
+                    </option>
                   ))}
                 </Input>
               </Col>
             </Row>
             <Col md={5}>
               <div>
-                <Label htmlFor="pick_up" className="form-label">สถานที่รับสินค้า</Label>
+                <Label htmlFor="pick_up" className="form-label">
+                  สถานที่รับสินค้า
+                </Label>
                 <Input
                   type="text"
                   className="form-control"
@@ -238,12 +277,12 @@ const Create = () => {
               </div>
             </Col>
             <Col md={5}>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: "relative" }}>
                 <Label htmlFor="drop_off" className="form-label">
                   สถานที่ส่งสินค้า
                 </Label>
                 {dropOffLocations.map((location, index) => (
-                  <div key={location.id} style={{ position: 'relative' }}>
+                  <div key={location.id} style={{ position: "relative" }}>
                     <Input
                       id={`drop_off${location.id}`}
                       name={`drop_off${location.id}`}
@@ -252,13 +291,20 @@ const Create = () => {
                       rows="1"
                       className="form-control"
                     />
-                    <div style={{ position: 'absolute', bottom: '5px', right: '5px', display: 'flex' }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "5px",
+                        right: "5px",
+                        display: "flex",
+                      }}
+                    >
                       {index === 0 && (
                         <Button
                           onClick={handleAddDropOff}
                           color="primary"
                           className="btn btn-primary btn-sm"
-                          style={{ marginRight: '5px' }}
+                          style={{ marginRight: "5px" }}
                           type="button"
                         >
                           +
@@ -269,7 +315,7 @@ const Create = () => {
                           onClick={() => handleDeleteDropOff(location.id)}
                           color="danger"
                           className="btn btn-danger btn-sm"
-                          style={{ marginRight: '5px' }}
+                          style={{ marginRight: "5px" }}
                           type="button"
                         >
                           -
@@ -282,7 +328,9 @@ const Create = () => {
             </Col>
             <Col md={10}>
               <div>
-                <Label htmlFor="consumer" className="form-label">ชื่อลูกค้า</Label>
+                <Label htmlFor="consumer" className="form-label">
+                  ชื่อลูกค้า
+                </Label>
                 <Input
                   type="text"
                   className="form-control"
@@ -295,7 +343,9 @@ const Create = () => {
             </Col>
             <Col md={5}>
               <div>
-                <Label htmlFor="income" className="form-label">ราคา</Label>
+                <Label htmlFor="income" className="form-label">
+                  ราคา
+                </Label>
                 <Input
                   type="number"
                   className="form-control"
@@ -308,7 +358,9 @@ const Create = () => {
             </Col>
             <Col md={5}>
               <div>
-                <Label htmlFor="oilFee" className="form-label">ค่าน้ำมัน</Label>
+                <Label htmlFor="oilFee" className="form-label">
+                  ค่าน้ำมัน
+                </Label>
                 <Input
                   type="number"
                   className="form-control"
@@ -321,7 +373,9 @@ const Create = () => {
             </Col>
             <Col md={5}>
               <div>
-                <Label htmlFor="tollwayFee" className="form-label">ค่าทางด่วน</Label>
+                <Label htmlFor="tollwayFee" className="form-label">
+                  ค่าทางด่วน
+                </Label>
                 <Input
                   type="number"
                   className="form-control"
@@ -334,7 +388,9 @@ const Create = () => {
             </Col>
             <Col md={5}>
               <div>
-                <Label htmlFor="otherFee" className="form-label">ค่าใช่จ่ายอื่นๆ</Label>
+                <Label htmlFor="otherFee" className="form-label">
+                  ค่าใช่จ่ายอื่นๆ
+                </Label>
                 <Input
                   type="number"
                   className="form-control"
@@ -347,7 +403,9 @@ const Create = () => {
             </Col>
             <Col md={5}>
               <div>
-                <Label htmlFor="remark" className="form-label">หมายเหตุ</Label>
+                <Label htmlFor="remark" className="form-label">
+                  หมายเหตุ
+                </Label>
                 <Input
                   type="text"
                   className="form-control"
@@ -375,7 +433,13 @@ const Create = () => {
 
             <Col md={1}>
               <div className="text-end">
-                <Button color="primary" type="submit" className="btn btn-primary">Submit</Button>
+                <Button
+                  color="primary"
+                  type="submit"
+                  className="btn btn-primary"
+                >
+                  Submit
+                </Button>
               </div>
             </Col>
           </Row>
@@ -385,4 +449,4 @@ const Create = () => {
   );
 };
 
-export default Create;
+export default OrderCreate;

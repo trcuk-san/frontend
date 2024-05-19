@@ -10,12 +10,31 @@ const CarCreate = () => {
   const [remarks, setRemarks] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     if (name === "vehicleId") {
       setVehicleId(value);
     } else if (name === "vehicleStatus") {
       setVehicleStatus(value);
+    } else if (name === "remarks") {
+      setRemarks(value);
+    }
+  };
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Prevent default form submission
+    try {
+      const carCreate: any = await createVehicle({
+        vehicleId: vehicleId,
+        vehicleStatus: vehicleStatus,
+        remarks: remarks,
+      });
+      console.log("car create successful:", carCreate);
+      navigate("/car");
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -26,19 +45,19 @@ const CarCreate = () => {
   //   return newErrors;
   // };
 
-  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
-    try {
-      const carCreate: any = await createVehicle({
-        vehicleId: vehicleId,
-        vehicleStatus: vehicleStatus,
-        remarks: remarks,
-      });
-      console.log("car create successful:");
-      navigate("/car");
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+  //   try {
+  //     const carCreate: any = await createVehicle({
+  //       vehicleId: vehicleId,
+  //       vehicleStatus: vehicleStatus,
+  //       remarks: remarks,
+  //     });
+  //     console.log("car create successful:");
+  //     navigate("/car");
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   return (
     <div className="page-content">
@@ -69,11 +88,13 @@ const CarCreate = () => {
                 </Label>
                 <select
                   className="form-select rounded-pill mb-3"
-                  aria-label="vehicleStatus"
+                  name="vehicleStatus"
+                  value={vehicleStatus}
+                  onChange={handleChange}
                 >
-                  <option>Select Vehicle Status </option>
-                  <option defaultValue="Ok">Declined Payment</option>
-                  <option defaultValue="notOK">Delivery Error</option>
+                  <option>Select Vehicle Status</option>
+                  <option defaultValue="Ok">Ok</option>
+                  <option defaultValue="notOK">notOK</option>
                 </select>
               </Col>
               <Col md={12}>
