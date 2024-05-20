@@ -253,6 +253,7 @@ import Kanbanboard from "pages/Tasks/KanbanBoard";
 import CarCreate from "pages/Invoices/CarCreate";
 import InvoiceCreate from "../pages/Invoices/InvoiceCreate";
 import MemberProfile from "pages/Authentication/ProfileView";
+import VehicleDetail from "pages/Invoices/CarDetails";
 
 
 const authProtectedRoutes = [
@@ -320,7 +321,8 @@ const authProtectedRoutes = [
 
   // //Invoices
   { path: "/order", component: <Order /> },
-  // { path: "/car", component: <Car /> },
+  { path: "/car", component: <Car /> },
+  { path: "/car/:id", component: <VehicleDetail /> },
   { path: "/member", component: <Member /> },
   { path: "/profile/:userId", component: <MemberProfile /> },
   { path: "/invoices", component: <Invoices /> },

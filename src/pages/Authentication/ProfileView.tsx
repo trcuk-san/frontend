@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { Container, Row, Col, Card, Alert, CardBody, Button, Label, Input, FormFeedback, Form } from "reactstrap";
-import * as Yup from "yup";
-import { useFormik } from "formik";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Container, Row, Col, Card, CardBody, UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem, Alert } from "reactstrap";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
+import TableContainer from "../../Components/Common/TableContainer";
+import FeatherIcon from "feather-icons-react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import DeleteModal from "../../Components/Common/DeleteModal";
 import avatar from "../../assets/images/users/avatar-1.jpg";
 
 interface User {
@@ -18,19 +21,44 @@ interface User {
   __v: number;
 }
 
+interface IOrder {
+  _id: string;
+  datePickUp: string;
+  timePickUp: string;
+  dateDropOff: string;
+  timeDropOff: string;
+  vehicle: string;
+  driver: string;
+  pick_up: string;
+  drop_off: string[];
+  consumer: string;
+  income: number;
+  oilFee: number;
+  tollwayFee: number;
+  otherFee: number;
+  remark: string;
+  orderStatus: string;
+  invoiced: boolean;
+}
+
 const MemberProfile = () => {
   const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [orders, setOrders] = useState<IOrder[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
+  const [deleteModal, setDeleteModal] = useState<boolean>(false);
+  const [selectedOrder, setSelectedOrder] = useState<IOrder | null>(null);
   const [email, setEmail] = useState("admin@gmail.com");
   const [idx, setIdx] = useState("1");
   const [userName, setUserName] = useState("Admin");
   const [profilePicture, setProfilePicture] = useState(avatar);
+  const [phone, setPhone] = useState("N/A");
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    console.log("userId from URL params:", userId);
-
     if (!userId || userId === "undefined") {
       setError("Invalid user ID");
       return;
@@ -43,8 +71,6 @@ const MemberProfile = () => {
           throw new Error("No token found");
         }
 
-        console.log("Fetching member with userId:", userId);
-
         const response = await fetch(`http://localhost:4000/auth/profile/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -53,87 +79,281 @@ const MemberProfile = () => {
 
         if (response.ok) {
           const memberData = await response.json();
-          console.log("Fetched member data:", memberData);
-
           if (!memberData || !memberData.firstname) {
             throw new Error("Invalid member data structure");
           }
 
           setUser(memberData);
-          setUserName(memberData.firstname);
+          setUserName(`${memberData.firstname} ${memberData.lastname}`);
           setEmail(memberData.email);
           setIdx(memberData._id);
+          setPhone(memberData.phone);
           setProfilePicture(memberData.profile_picture || avatar);
         } else {
           const errorText = await response.text();
           throw new Error(`Failed to fetch member: ${response.status} ${response.statusText} - ${errorText}`);
         }
       } catch (error) {
-        console.error("Error fetching member:", error);
         setError("Error fetching member");
       }
     };
 
-    fetchMember();
-  }, [userId]);
-
-  const validation = useFormik({
-    enableReinitialize: true,
-    initialValues: {
-      first_name: userName || "Admin",
-      idx: idx || "",
-    },
-    validationSchema: Yup.object({
-      first_name: Yup.string().required("Please Enter Your UserName"),
-    }),
-    onSubmit: async (values) => {
+    const fetchOrders = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`http://localhost:4000/auth/profile/${idx}`, {
-          method: "PUT",
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch(`http://localhost:4000/order/listOrderByDriver/${userId}`, {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(values),
         });
 
         if (response.ok) {
-          const data = await response.json();
-          setUserName(data.first_name);
-          setSuccess(true);
-          setError("");
-
-          // Update user in state and sessionStorage
-          setUser((prevUser: User | null) =>
-            prevUser ? { ...prevUser, firstname: data.first_name } : prevUser
-          );
-          const storedUser = sessionStorage.getItem("authUser");
-          if (storedUser) {
-            const obj = JSON.parse(storedUser);
-            obj.data.first_name = data.first_name;
-            sessionStorage.setItem("authUser", JSON.stringify(obj));
-          }
-
-          // Reload the page after update
-          window.location.reload();
+          const orderData = await response.json();
+          setOrders(orderData.data || []);
         } else {
-          throw new Error("Failed to update profile");
+          throw new Error("Failed to fetch orders");
         }
       } catch (error) {
-        setError("Failed to update profile");
-        console.error("Error updating profile:", error);
-        setTimeout(() => setError(""), 3000);
+        setError("Error fetching orders");
       }
-    },
-  });
+    };
 
-  useEffect(() => {
-    if (success) {
-      const timeout = setTimeout(() => setSuccess(false), 3000);
-      return () => clearTimeout(timeout);
+    const fetchVehicles = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch("http://localhost:4000/vehicle/listVehicle", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const vehicleData = await response.json();
+          setVehicles(vehicleData.data || []);
+        } else {
+          throw new Error("Failed to fetch vehicles");
+        }
+      } catch (error) {
+        setError("Error fetching vehicles");
+      }
+    };
+
+    const fetchDrivers = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch("http://localhost:4000/auth/users", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const driverData = await response.json();
+          setDrivers(driverData.data || []);
+        } else {
+          throw new Error("Failed to fetch drivers");
+        }
+      } catch (error) {
+        setError("Error fetching drivers");
+      }
+    };
+
+    fetchMember();
+    fetchOrders();
+    fetchVehicles();
+    fetchDrivers();
+  }, [userId]);
+
+  const onClickDelete = (order: IOrder) => {
+    setSelectedOrder(order);
+    setDeleteModal(true);
+  };
+
+  const handleDeleteOrder = async () => {
+    if (selectedOrder) {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch(`http://localhost:4000/order/deleteOrder/${selectedOrder._id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          setOrders(orders.filter((order) => order._id !== selectedOrder._id));
+          setDeleteModal(false);
+          toast.success("Order deleted successfully");
+        } else {
+          throw new Error("Failed to delete order");
+        }
+      } catch (error) {
+        setError("Error deleting order");
+      }
     }
-  }, [success]);
+  };
+
+  const getVehicleId = (vehicleID: string) => {
+    const vehicle = vehicles.find((v) => v._id === vehicleID);
+    return vehicle ? vehicle.vehicleId : "N/A";
+  };
+
+  const getDriverName = (driverID: string) => {
+    const driver = drivers.find((d) => d._id === driverID);
+    return driver ? driver.firstname : "N/A";
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        header: "No.",
+        accessorKey: "_id",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.row.index + 1}</span>;
+        },
+      },
+      {
+        header: "Pick Up Date",
+        accessorKey: "datePickUp",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Pick Up Time",
+        accessorKey: "timePickUp",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Drop Off Date",
+        accessorKey: "dateDropOff",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Drop Off Time",
+        accessorKey: "timeDropOff",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Vehicle",
+        accessorKey: "vehicle",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{getVehicleId(cell.getValue())}</span>;
+        },
+      },
+      {
+        header: "Pick Up Location",
+        accessorKey: "pick_up",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Drop Off Locations",
+        accessorKey: "drop_off",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          const dropOffs = cell.getValue();
+          return (
+            <UncontrolledDropdown>
+              <DropdownToggle href="#" className="btn btn-soft-secondary btn-sm" tag="button">
+                <FeatherIcon icon="map-pin" className="icon-sm" />
+              </DropdownToggle>
+              <DropdownMenu>
+                {dropOffs.map((location: string, index: number) => {
+                  const address = location.split(",")[0];
+                  return <DropdownItem key={index}>{address}</DropdownItem>;
+                })}
+              </DropdownMenu>
+            </UncontrolledDropdown>
+          );
+        },
+      },
+      {
+        header: "Consumer",
+        accessorKey: "consumer",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Income",
+        accessorKey: "income",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Status",
+        accessorKey: "orderStatus",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          switch (cell.getValue()) {
+            case "Start":
+              return <span className="badge text-uppercase bg-success-subtle text-success">{cell.getValue()}</span>;
+            case "In Progress":
+              return <span className="badge text-uppercase bg-warning-subtle text-warning">{cell.getValue()}</span>;
+            case "Completed":
+              return <span className="badge text-uppercase bg-primary-subtle text-primary">{cell.getValue()}</span>;
+            default:
+              return <span className="badge text-uppercase bg-secondary-subtle text-secondary">{cell.getValue()}</span>;
+          }
+        },
+      },
+      {
+        header: "Action",
+        cell: (cellProps: any) => {
+          return (
+            <UncontrolledDropdown>
+              <DropdownToggle href="#" className="btn btn-soft-secondary btn-sm dropdown" tag="button">
+                <i className="ri-more-fill align-middle"></i>
+              </DropdownToggle>
+              <DropdownMenu className="dropdown-menu-end">
+                <DropdownItem onClick={() => navigate(`/order/${cellProps.row.original._id}`)}>
+                  <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
+                </DropdownItem>
+                <DropdownItem onClick={() => onClickDelete(cellProps.row.original)}>
+                  <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete
+                </DropdownItem>
+              </DropdownMenu>
+            </UncontrolledDropdown>
+          );
+        },
+      },
+    ],
+    [vehicles, drivers, navigate]
+  );
 
   if (error) {
     return <div>{error}</div>;
@@ -168,8 +388,9 @@ const MemberProfile = () => {
                     <div className="flex-grow-1 align-self-center">
                       <div className="text-muted">
                         <h5>{userName || "Admin"}</h5>
-                        <p className="mb-1">Email Id : {email}</p>
                         <p className="mb-0">Id No : #{idx}</p>
+                        <p className="mb-1">Email : {email}</p>
+                        <p className="mb-1">Phone : {phone}</p>
                       </div>
                     </div>
                   </div>
@@ -178,41 +399,20 @@ const MemberProfile = () => {
             </Col>
           </Row>
 
-          <h4 className="card-title mb-4">Change User Name</h4>
+          <h4 className="card-title mb-4 text-center">Order History</h4>
 
           <Card>
             <CardBody>
-              <Form
-                className="form-horizontal"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  validation.handleSubmit();
-                  return false;
-                }}
-              >
-                <div className="form-group">
-                  <Label className="form-label">User Name</Label>
-                  <Input
-                    name="first_name"
-                    className="form-control"
-                    placeholder="Enter User Name"
-                    type="text"
-                    onChange={validation.handleChange}
-                    onBlur={validation.handleBlur}
-                    value={validation.values.first_name || ""}
-                    invalid={validation.touched.first_name && !!validation.errors.first_name}
-                  />
-                  {validation.touched.first_name && validation.errors.first_name ? (
-                    <FormFeedback type="invalid">{validation.errors.first_name}</FormFeedback>
-                  ) : null}
-                  <Input name="idx" value={idx} type="hidden" />
-                </div>
-                <div className="text-center mt-4">
-                  <Button type="submit" color="danger">
-                    Update UserName
-                  </Button>
-                </div>
-              </Form>
+              <TableContainer
+                columns={columns}
+                data={orders}
+                isGlobalFilter={true}
+                customPageSize={10}
+                isInvoiceListFilter={false}
+                theadClass="text-muted text-uppercase"
+                SearchPlaceholder="Search for order, customer, location or something..."
+              />
+              <ToastContainer closeButton={false} limit={1} />
             </CardBody>
           </Card>
         </Container>

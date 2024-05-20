@@ -48,9 +48,16 @@ export const listVehicle = async () => {
 //   }
 // };
 
-export const getVehicle = async (vehicleId: any) => {
-  const res = await axios.get('/vehicle/getVehicle', {params: {_id: vehicleId},});
-  return res;
+export const getVehicle = async (id: string) => {
+  const response = await axios.get(`/vehicle/getVehicle`, {
+    params: { _id: id },
+  });
+  return response.data;
+};
+
+export const getVehicleOrders = async (id: string) => {
+  const response = await axios.get(`/vehicle/getVehicleOrders/${id}`);
+  return response.data;
 };
 
 export const updateVehicle = async (body: IUpdatevehicle) => {
