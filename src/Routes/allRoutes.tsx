@@ -55,6 +55,7 @@ import Invoices1 from "../pages/Invoices/List4";
 import Invoices from "../pages/Invoices/InvoicesList";
 import OrderCreate from "../pages/Invoices/OrderCreate";
 import InvoiceDetails from "../pages/Invoices/InvoiceDetails";
+import OrderDetail from '../pages/Invoices/OrderDetail';
 // import List from "../pages/Invoices/List";
 // import Details from "../pages/Invoices/Details";
 
@@ -251,6 +252,8 @@ import Kanbanboard from "pages/Tasks/KanbanBoard";
 // // Project
 import CarCreate from "pages/Invoices/CarCreate";
 import InvoiceCreate from "../pages/Invoices/InvoiceCreate";
+import MemberProfile from "pages/Authentication/ProfileView";
+
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <DashboardEcommerce /> },
@@ -319,10 +322,13 @@ const authProtectedRoutes = [
   { path: "/order", component: <Order /> },
   // { path: "/car", component: <Car /> },
   { path: "/member", component: <Member /> },
+  { path: "/profile/:userId", component: <MemberProfile /> },
   { path: "/invoices", component: <Invoices /> },
   { path: "/invoices1", component: <Invoices1 /> },
   { path: "/apps-invoices-details", component: <InvoiceDetails /> },
   { path: "/order-create", component: <OrderCreate /> },
+  { path: "/order/:id", component: <OrderDetail /> },
+  
   // { path: "/apps-invoices-list1", component: <List /> },
 
   // //Supports Tickets

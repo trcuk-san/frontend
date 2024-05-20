@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Container, Row, Col, Card, CardBody, UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem, Button, Alert, CardHeader } from "reactstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import FeatherIcon from "feather-icons-react";
@@ -8,7 +8,6 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useDispatch } from "react-redux";
 import DeleteModal from "../../Components/Common/DeleteModal";
-import { sortDropOffsByDistance, getGeocodeAddress } from "../../services/map/GoogleMapsAPI";
 
 interface IOrder {
   _id: string;
@@ -16,7 +15,7 @@ interface IOrder {
   timePickUp: string;
   dateDropOff: string;
   timeDropOff: string;
-  vehicleID: string;
+  vehicle: string;
   driver: string;
   pick_up: string;
   drop_off: string[];
@@ -31,6 +30,7 @@ interface IOrder {
 }
 
 const OrderList = () => {
+  const navigate = useNavigate();
   const dispatch: any = useDispatch();
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -41,8 +41,6 @@ const OrderList = () => {
   const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
   const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState<HTMLInputElement[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [sortedDropOffs, setSortedDropOffs] = useState<{ [key: string]: string[] }>({});
-  const [addresses, setAddresses] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -63,7 +61,7 @@ const OrderList = () => {
           console.log("Fetched orders response:", orderData);
           setOrders(orderData.data || []);
           orderData.data.forEach((order: IOrder) => {
-            console.log(`Order ID: ${order._id}, Vehicle ID: ${order.vehicleID}`);
+            console.log(`Order ID: ${order._id}, Vehicle ID: ${order.vehicle}`);
           });
         } else {
           throw new Error("Failed to fetch orders");
@@ -228,43 +226,13 @@ const OrderList = () => {
   const getVehicleId = (vehicleID: string) => {
     console.log("Vehicle ID from order:", vehicleID); // Add this line
     console.log("Vehicles:", vehicles); // Add this line
-    const vehicle = vehicles.find((v) => v._id === vehicleID);
-    return vehicle ? vehicle.vehicleId : "N/A";
+    const vehicleid = vehicles.find((v) => v._id === vehicleID);
+    return vehicleid ? vehicleid.vehicleId : "N/A";
   };
 
   const getDriverName = (driverID: string) => {
     const driver = drivers.find((d) => d._id === driverID);
     return driver ? driver.firstname : "N/A";
-  };
-
-  const getAddress = async (lat: number, lng: number): Promise<string> => {
-    const key = `${lat},${lng}`;
-    if (addresses[key]) {
-      return addresses[key];
-    } else {
-      try {
-        const address = await getGeocodeAddress(lat, lng);
-        setAddresses((prev) => ({ ...prev, [key]: address }));
-        return address;
-      } catch (error: unknown) {
-        console.error("Error fetching address:", error);
-        return "Unknown address";
-      }
-    }
-  };
-
-  const handleDropDownClick = async (orderID: string) => {
-    if (!sortedDropOffs[orderID]) {
-      const order = orders.find((o) => o._id === orderID);
-      if (order) {
-        try {
-          const sorted = await sortDropOffsByDistance(order.drop_off);
-          setSortedDropOffs((prev) => ({ ...prev, [orderID]: sorted }));
-        } catch (error: unknown) {
-          setError(`Failed to sort drop-offs by distance: ${(error as Error).message}`);
-        }
-      }
-    }
   };
 
   const columns = useMemo(
@@ -335,7 +303,7 @@ const OrderList = () => {
       },
       {
         header: "Vehicle",
-        accessorKey: "vehicleID",
+        accessorKey: "vehicle",
         enableColumnFilter: false,
         cell: (cell: any) => {
           return <span>{getVehicleId(cell.getValue())}</span>;
@@ -354,13 +322,7 @@ const OrderList = () => {
         accessorKey: "pick_up",
         enableColumnFilter: false,
         cell: (cell: any) => {
-          const coordinates = cell.getValue().split(",");
-          const lat = parseFloat(coordinates[0]);
-          const lng = parseFloat(coordinates[1]);
-          const key = `${lat},${lng}`;
-          const address = addresses[key] || cell.getValue();
-          getAddress(lat, lng);
-          return <span>{address}</span>;
+          return <span>{cell.getValue()}</span>;
         },
       },
       {
@@ -368,22 +330,15 @@ const OrderList = () => {
         accessorKey: "drop_off",
         enableColumnFilter: false,
         cell: (cell: any) => {
-          const orderID = cell.row.original._id;
-          const dropOffs = sortedDropOffs[orderID] || cell.getValue();
-
+          const dropOffs = cell.getValue();
           return (
-            <UncontrolledDropdown onClick={() => handleDropDownClick(orderID)}>
+            <UncontrolledDropdown>
               <DropdownToggle href="#" className="btn btn-soft-secondary btn-sm" tag="button">
                 <FeatherIcon icon="map-pin" className="icon-sm" />
               </DropdownToggle>
               <DropdownMenu>
                 {dropOffs.map((location: string, index: number) => {
-                  const coordinates = location.split(",");
-                  const lat = parseFloat(coordinates[0]);
-                  const lng = parseFloat(coordinates[1]);
-                  const key = `${lat},${lng}`;
-                  const address = addresses[key] || location;
-                  getAddress(lat, lng);
+                  const address = location.split(",")[0];
                   return <DropdownItem key={index}>{address}</DropdownItem>;
                 })}
               </DropdownMenu>
@@ -433,6 +388,9 @@ const OrderList = () => {
                 <i className="ri-more-fill align-middle"></i>
               </DropdownToggle>
               <DropdownMenu className="dropdown-menu-end">
+              <DropdownItem onClick={() => navigate(`/order/${cellProps.row.original._id}`)}>
+                  <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
+                </DropdownItem>
                 <DropdownItem onClick={() => onClickDelete(cellProps.row.original)}>
                   <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete
                 </DropdownItem>
@@ -442,7 +400,7 @@ const OrderList = () => {
         },
       },
     ],
-    [checkedAll, vehicles, drivers, sortedDropOffs, deleteCheckbox, addresses]
+    [checkedAll, vehicles, drivers, deleteCheckbox, navigate]
   );
 
   document.title = "Orders List";

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import BreadCrumb from "Components/Common/BreadCrumb";
 import { createOrder, IOrder, setAuthorization } from "../../services/order";
 import MapModal from "../../services/map/MapModal";
+import '@fortawesome/fontawesome-free/css/all.min.css'; // Import FontAwesome CSS
 
 const OrderCreate = () => {
   const navigate = useNavigate();
@@ -122,11 +123,12 @@ const OrderCreate = () => {
     }));
   };
 
-  const handleLocationSelect = (coords: { lat: number; lng: number }, key: string) => {
+  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
+    const { lat, lng, address } = location;
+    const formattedLocation = `${address},${lat},${lng}`;
+
     if (selectedDropOffIndex !== null) {
-      const updatedDropOff = formState.drop_off.map((dropOff, i) =>
-        i === selectedDropOffIndex ? `${coords.lat}, ${coords.lng}` : dropOff
-      );
+      const updatedDropOff = formState.drop_off.map((dropOff, i) => (i === selectedDropOffIndex ? formattedLocation : dropOff));
       setFormState((prevState) => ({
         ...prevState,
         drop_off: updatedDropOff,
@@ -134,7 +136,7 @@ const OrderCreate = () => {
     } else {
       setFormState((prevState) => ({
         ...prevState,
-        pick_up: `${coords.lat}, ${coords.lng}`,
+        pick_up: address,
       }));
     }
     setSelectedDropOffIndex(null);
@@ -143,19 +145,19 @@ const OrderCreate = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form state at submission:", formState);
-    
+
     // Ensure vehicle and driver are selected
     if (!formState.vehicle || !formState.driver) {
       setError("Vehicle and driver must be selected.");
       return;
     }
-    
+
     try {
       const response = await createOrder(formState);
       console.log("Order created successfully:", response);
       setSuccess("Order created successfully");
       setError(null);
-      
+
       // Redirect to the order list page after successful order creation
       navigate("/order");
 
@@ -293,9 +295,14 @@ const OrderCreate = () => {
                     onChange={handleChange}
                   />
                   <InputGroupText>
-                    <Button color="secondary" onClick={() => { setSelectedDropOffIndex(null); setIsMapModalOpen(true); }}>
-                      Select on Map
-                    </Button>
+                    <i
+                      className="fa-solid fa-map-location"
+                      onClick={() => {
+                        setSelectedDropOffIndex(null);
+                        setIsMapModalOpen(true);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    ></i>
                   </InputGroupText>
                 </InputGroup>
               </div>
@@ -317,12 +324,19 @@ const OrderCreate = () => {
                         className="form-control"
                       />
                       <InputGroupText>
-                        <Button color="secondary" onClick={() => { setSelectedDropOffIndex(index); setIsMapModalOpen(true); }}>
-                          Select on Map
-                        </Button>
-                        <Button color="danger" onClick={() => handleRemoveDropOff(index)}>
-                          -
-                        </Button>
+                        <i
+                          className="fa-solid fa-map-location"
+                          onClick={() => {
+                            setSelectedDropOffIndex(index);
+                            setIsMapModalOpen(true);
+                          }}
+                          style={{ cursor: 'pointer', marginRight: '10px' }}
+                        ></i>
+                        {index !== 0 && (
+                          <Button color="danger" className="btn btn-sm" onClick={() => handleRemoveDropOff(index)}>
+                            -
+                          </Button>
+                        )}
                       </InputGroupText>
                     </InputGroup>
                   </div>
@@ -450,7 +464,7 @@ const OrderCreate = () => {
       <MapModal
         isOpen={isMapModalOpen}
         toggle={() => setIsMapModalOpen(!isMapModalOpen)}
-        onSelectLocation={(coords) => handleLocationSelect(coords, selectedDropOffIndex !== null ? `drop_off.${selectedDropOffIndex}` : "pick_up_coords")}
+        onSelectLocation={(location) => handleLocationSelect(location)}
       />
     </div>
   );
