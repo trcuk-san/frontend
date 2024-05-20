@@ -251,6 +251,7 @@ import Kanbanboard from "pages/Tasks/KanbanBoard";
 // // Project
 import CarCreate from "pages/Invoices/CarCreate";
 import InvoiceCreate from "../pages/Invoices/InvoiceCreate";
+import ReceiptList from "pages/Invoices/ReceiptList";
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <DashboardEcommerce /> },
@@ -477,6 +478,7 @@ const authProtectedRoutes = [
 
   { path: "/car-create", component: <CarCreate /> },
   { path: "/invoice-create", component: <InvoiceCreate /> },
+  { path: "/receipt-list", component: <ReceiptList /> },
 ];
 
 const publicRoutes = [

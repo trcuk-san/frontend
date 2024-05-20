@@ -1,44 +1,60 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Card, CardBody, Form, Input, Label, Button, FormFeedback } from 'reactstrap';
-import ParticlesAuth from '../AuthenticationInner/ParticlesAuth';
-import logoLight from '../../assets/images/logo-light.png';
+import React, { useState } from "react";
+import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  Form,
+  Input,
+  Label,
+  Button,
+  FormFeedback,
+} from "reactstrap";
+import ParticlesAuth from "../AuthenticationInner/ParticlesAuth";
+import logoLight from "../../assets/images/logo-light.png";
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [passwordShow, setPasswordShow] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (name === 'email') setEmail(value);
-    if (name === 'password') setPassword(value);
+    if (name === "email") setEmail(value);
+    if (name === "password") setPassword(value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:4000/auth/login', { email, password });
-      console.log('Response:', response);
+      const response = await axios.post("http://localhost:4000/auth/login", {
+        email,
+        password,
+      });
+      console.log("Response:", response);
       const { token, message } = response.data || response; // ตรวจสอบ response.data หรือ response
 
       if (token) {
-        localStorage.setItem('token', token);
-        console.log('Token saved to localStorage:', localStorage.getItem('token')); // เพิ่ม log เพื่อตรวจสอบ token ใน localStorage
-        navigate('/profile');
+        localStorage.setItem("token", token);
+        console.log(
+          "Token saved to localStorage:",
+          localStorage.getItem("token")
+        ); // เพิ่ม log เพื่อตรวจสอบ token ใน localStorage
+        navigate("/profile");
       } else {
-        setErrors({ email: 'Invalid email or password' });
-        console.error('No token in response:', response.data);
+        setErrors({ email: "Invalid email or password" });
+        console.error("No token in response:", response.data);
       }
     } catch (error) {
-      console.error('Error logging in:', error);
-      setErrors({ email: 'Invalid email or password' });
+      console.error("Error logging in:", error);
+      setErrors({ email: "Invalid email or password" });
     }
   };
-
   return (
     <ParticlesAuth>
       <div className="auth-page-content mt-lg-5">
@@ -64,9 +80,7 @@ const Login: React.FC = () => {
                 <CardBody className="p-4">
                   <div className="text-center mt-2">
                     <h5 className="text-primary">Welcome Back !</h5>
-                    <p className="text-muted">
-                      Sign in to continue to Velzon.
-                    </p>
+                    <p className="text-muted">Sign in to continue to Velzon.</p>
                   </div>
                   <div className="p-2 mt-4">
                     <Form onSubmit={handleSubmit}>
@@ -93,7 +107,10 @@ const Login: React.FC = () => {
 
                       <div className="mb-3">
                         <div className="float-end">
-                          <Link to="/auth-pass-reset-basic" className="text-muted">
+                          <Link
+                            to="/auth-pass-reset-basic"
+                            className="text-muted"
+                          >
                             Forgot password?
                           </Link>
                         </div>
@@ -134,13 +151,20 @@ const Login: React.FC = () => {
                           value=""
                           id="auth-remember-check"
                         />
-                        <Label className="form-check-label" htmlFor="auth-remember-check">
+                        <Label
+                          className="form-check-label"
+                          htmlFor="auth-remember-check"
+                        >
                           Remember me
                         </Label>
                       </div>
 
                       <div className="mt-4">
-                        <Button color="success" className="btn btn-success w-100" type="submit">
+                        <Button
+                          color="success"
+                          className="btn btn-success w-100"
+                          type="submit"
+                        >
                           Sign In
                         </Button>
                       </div>
@@ -172,7 +196,10 @@ const Login: React.FC = () => {
               <div className="mt-4 text-center">
                 <p className="mb-0">
                   Don't have an account ?{" "}
-                  <Link to="/register" className="fw-semibold text-primary text-decoration-underline">
+                  <Link
+                    to="/register"
+                    className="fw-semibold text-primary text-decoration-underline"
+                  >
                     {" "}
                     Signup{" "}
                   </Link>{" "}
