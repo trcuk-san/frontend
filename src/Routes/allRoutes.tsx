@@ -49,7 +49,7 @@ import CrmLeads from "../pages/Crm/CrmLeads/index";
 // //Invoices
 import OrderPage from "../pages/Invoices/OrderPage";
 import Order from "../pages/Invoices/List";
-// import Car from "../pages/Invoices/CarList";
+import Car from "../pages/Invoices/CarList";
 import Member from "../pages/Invoices/List2";
 import Invoices1 from "../pages/Invoices/List4";
 import Invoices from "../pages/Invoices/InvoicesList";
@@ -477,6 +477,7 @@ const authProtectedRoutes = [
 
   { path: "/car-create", component: <CarCreate /> },
   { path: "/invoice-create", component: <InvoiceCreate /> },
+  
 ];
 
 const publicRoutes = [
@@ -516,7 +517,6 @@ const publicRoutes = [
 
   { path: "/pages-maintenance", component: <Maintenance /> },
   { path: "/pages-co  ming-soon", component: <ComingSoon /> },
-  { path: "/order", component: <OrderPage /> }, // เพิ่มหน้า OrderPage ที่ไม่ต้องการตรวจสอบสิทธิ์
   { path: "/", exact: true, component: <Navigate to="/dashboard" /> },
   { path: "*", component: <Navigate to="/dashboard" /> },
 ];

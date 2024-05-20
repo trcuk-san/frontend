@@ -1,23 +1,14 @@
 import React, { useState, useEffect } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Button,
-  Label,
-  Input,
-  Form,
-  Alert,
-} from "reactstrap";
+import { Container, Row, Col, Button, Label, Input, Form, Alert, InputGroup, InputGroupText } from "reactstrap";
+import { useNavigate } from "react-router-dom";
 import BreadCrumb from "Components/Common/BreadCrumb";
-import { createOrder, IOrder } from "../../services/order";
-import { setAuthorization } from "../../services/order";
-import avatar from "../../assets/images/users/avatar-1.jpg"; // If you need this for any purpose
+import { createOrder, IOrder, setAuthorization } from "../../services/order";
+import MapModal from "../../services/map/MapModal";
 
 const OrderCreate = () => {
-  const [dropOffLocations, setDropOffLocations] = useState([
-    { id: 1, value: "" },
-  ]);
+  const navigate = useNavigate();
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [selectedDropOffIndex, setSelectedDropOffIndex] = useState<number | null>(null);
   const [formState, setFormState] = useState<IOrder>({
     datePickUp: "",
     timePickUp: "",
@@ -26,12 +17,14 @@ const OrderCreate = () => {
     vehicle: "",
     driver: "",
     pick_up: "",
-    drop_off: [""],
+    drop_off: [""], // Initialize with one empty string
     consumer: "",
-    income: "",
-    oilFee: "",
-    tollwayFee: "",
-    otherFee: "",
+    income: 0,
+    oilFee: 0,
+    tollwayFee: 0,
+    otherFee: 0,
+    orderStatus: "Start",
+    invoiced: false,
     remark: "",
   });
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -90,58 +83,82 @@ const OrderCreate = () => {
     fetchVehiclesAndDrivers();
   }, []);
 
-  const handleAddDropOff = () => {
-    const newId = dropOffLocations.length + 1;
-    setDropOffLocations([...dropOffLocations, { id: newId, value: "" }]);
-    setFormState({
-      ...formState,
-      drop_off: [...formState.drop_off, ""],
-    });
-  };
-
-  const handleDeleteDropOff = (id: number) => {
-    const updatedLocations = dropOffLocations.filter(
-      (location) => location.id !== id
-    );
-    const updatedDropOff = formState.drop_off.filter(
-      (_, index) => index !== id - 1
-    );
-    setDropOffLocations(updatedLocations);
-    setFormState({
-      ...formState,
-      drop_off: updatedDropOff,
-    });
-  };
-
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    id?: number
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    if (id !== undefined) {
-      const updatedDropOff = formState.drop_off.map(
-        (value: string, index: number) =>
-          index === id ? e.target.value : value
+    const { name, value } = e.target;
+    setFormState((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleDropOffChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    index: number
+  ) => {
+    const { value } = e.target;
+    const updatedDropOff = formState.drop_off.map((dropOff, i) =>
+      i === index ? value : dropOff
+    );
+    setFormState((prevState) => ({
+      ...prevState,
+      drop_off: updatedDropOff,
+    }));
+  };
+
+  const handleAddDropOff = () => {
+    setFormState((prevState) => ({
+      ...prevState,
+      drop_off: [...prevState.drop_off, ""],
+    }));
+  };
+
+  const handleRemoveDropOff = (index: number) => {
+    const updatedDropOff = formState.drop_off.filter((_, i) => i !== index);
+    setFormState((prevState) => ({
+      ...prevState,
+      drop_off: updatedDropOff,
+    }));
+  };
+
+  const handleLocationSelect = (coords: { lat: number; lng: number }, key: string) => {
+    if (selectedDropOffIndex !== null) {
+      const updatedDropOff = formState.drop_off.map((dropOff, i) =>
+        i === selectedDropOffIndex ? `${coords.lat}, ${coords.lng}` : dropOff
       );
-      setFormState({
-        ...formState,
+      setFormState((prevState) => ({
+        ...prevState,
         drop_off: updatedDropOff,
-      });
+      }));
     } else {
-      const { name, value } = e.target;
-      setFormState({
-        ...formState,
-        [name]: value,
-      });
+      setFormState((prevState) => ({
+        ...prevState,
+        pick_up: `${coords.lat}, ${coords.lng}`,
+      }));
     }
+    setSelectedDropOffIndex(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form state at submission:", formState);
+    
+    // Ensure vehicle and driver are selected
+    if (!formState.vehicle || !formState.driver) {
+      setError("Vehicle and driver must be selected.");
+      return;
+    }
+    
     try {
       const response = await createOrder(formState);
       console.log("Order created successfully:", response);
       setSuccess("Order created successfully");
       setError(null);
+      
+      // Redirect to the order list page after successful order creation
+      navigate("/order");
+
       // Handle success, e.g., navigate to the order list or show a success message
     } catch (error: any) {
       console.error("Error creating order:", error.message);
@@ -266,14 +283,21 @@ const OrderCreate = () => {
                 <Label htmlFor="pick_up" className="form-label">
                   สถานที่รับสินค้า
                 </Label>
-                <Input
-                  type="text"
-                  className="form-control"
-                  id="pick_up"
-                  name="pick_up"
-                  value={formState.pick_up}
-                  onChange={handleChange}
-                />
+                <InputGroup>
+                  <Input
+                    type="text"
+                    className="form-control"
+                    id="pick_up"
+                    name="pick_up"
+                    value={formState.pick_up}
+                    onChange={handleChange}
+                  />
+                  <InputGroupText>
+                    <Button color="secondary" onClick={() => { setSelectedDropOffIndex(null); setIsMapModalOpen(true); }}>
+                      Select on Map
+                    </Button>
+                  </InputGroupText>
+                </InputGroup>
               </div>
             </Col>
             <Col md={5}>
@@ -281,49 +305,31 @@ const OrderCreate = () => {
                 <Label htmlFor="drop_off" className="form-label">
                   สถานที่ส่งสินค้า
                 </Label>
-                {dropOffLocations.map((location, index) => (
-                  <div key={location.id} style={{ position: "relative" }}>
-                    <Input
-                      id={`drop_off${location.id}`}
-                      name={`drop_off${location.id}`}
-                      value={formState.drop_off[index]}
-                      onChange={(e) => handleChange(e, index)}
-                      rows="1"
-                      className="form-control"
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "5px",
-                        right: "5px",
-                        display: "flex",
-                      }}
-                    >
-                      {index === 0 && (
-                        <Button
-                          onClick={handleAddDropOff}
-                          color="primary"
-                          className="btn btn-primary btn-sm"
-                          style={{ marginRight: "5px" }}
-                          type="button"
-                        >
-                          +
+                {formState.drop_off.map((location, index) => (
+                  <div key={index} style={{ position: "relative", marginBottom: "10px" }}>
+                    <InputGroup>
+                      <Input
+                        id={`drop_off${index}`}
+                        name={`drop_off${index}`}
+                        value={location}
+                        onChange={(e) => handleDropOffChange(e, index)}
+                        rows="1"
+                        className="form-control"
+                      />
+                      <InputGroupText>
+                        <Button color="secondary" onClick={() => { setSelectedDropOffIndex(index); setIsMapModalOpen(true); }}>
+                          Select on Map
                         </Button>
-                      )}
-                      {index > 0 && (
-                        <Button
-                          onClick={() => handleDeleteDropOff(location.id)}
-                          color="danger"
-                          className="btn btn-danger btn-sm"
-                          style={{ marginRight: "5px" }}
-                          type="button"
-                        >
+                        <Button color="danger" onClick={() => handleRemoveDropOff(index)}>
                           -
                         </Button>
-                      )}
-                    </div>
+                      </InputGroupText>
+                    </InputGroup>
                   </div>
                 ))}
+                <Button onClick={handleAddDropOff} color="primary" className="btn btn-primary btn-sm" type="button">
+                  Add Drop Off Location
+                </Button>
               </div>
             </Col>
             <Col md={10}>
@@ -433,11 +439,7 @@ const OrderCreate = () => {
 
             <Col md={1}>
               <div className="text-end">
-                <Button
-                  color="primary"
-                  type="submit"
-                  className="btn btn-primary"
-                >
+                <Button color="primary" type="submit" className="btn btn-primary">
                   Submit
                 </Button>
               </div>
@@ -445,6 +447,11 @@ const OrderCreate = () => {
           </Row>
         </Form>
       </Container>
+      <MapModal
+        isOpen={isMapModalOpen}
+        toggle={() => setIsMapModalOpen(!isMapModalOpen)}
+        onSelectLocation={(coords) => handleLocationSelect(coords, selectedDropOffIndex !== null ? `drop_off.${selectedDropOffIndex}` : "pick_up_coords")}
+      />
     </div>
   );
 };

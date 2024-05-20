@@ -1,272 +1,440 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  CardBody,
-  Row,
-  Col,
-  Card,
-  Container,
-  CardHeader,
-  UncontrolledDropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
-} from "reactstrap";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Container, Row, Col, Card, CardBody, UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem, Button, Alert, CardHeader } from "reactstrap";
 import { Link } from "react-router-dom";
-import moment from "moment";
-import CountUp from "react-countup";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
-import DeleteModal from "../../Components/Common/DeleteModal";
-
-
-//Import Icons
 import FeatherIcon from "feather-icons-react";
-import { invoiceWidgets } from "../../common/data/invoiceList";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useDispatch } from "react-redux";
+import DeleteModal from "../../Components/Common/DeleteModal";
+import { sortDropOffsByDistance, getGeocodeAddress } from "../../services/map/GoogleMapsAPI";
 
-//Import actions
-import {
-  getInvoices as onGetInvoices,
-  deleteInvoice as onDeleteInvoice,
-} from "../../slices/thunks";
+interface IOrder {
+  _id: string;
+  datePickUp: string;
+  timePickUp: string;
+  dateDropOff: string;
+  timeDropOff: string;
+  vehicleID: string;
+  driver: string;
+  pick_up: string;
+  drop_off: string[];
+  consumer: string;
+  income: number;
+  oilFee: number;
+  tollwayFee: number;
+  otherFee: number;
+  remark: string;
+  orderStatus: string;
+  invoiced: boolean;
+}
 
-//redux
-import { useSelector, useDispatch } from "react-redux";
-
-import Loader from "../../Components/Common/Loader";
-
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { createSelector } from "reselect";
-
-const Order = () => {
+const OrderList = () => {
   const dispatch: any = useDispatch();
-
-  const selectLayoutState = (state: any) => state.Invoice;
-  const selectinvoiceProperties = createSelector(
-    selectLayoutState,
-    (state) => ({
-      invoices: state.invoices,
-      isInvoiceSuccess: state.isInvoiceSuccess,
-      error: state.error,
-    })
-  );
-
-  
-  // Inside your component
-  const {
-    invoices, isInvoiceSuccess, error
-  } = useSelector(selectinvoiceProperties);
-
-
-  //delete invoice
+  const [orders, setOrders] = useState<IOrder[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [deleteModalMulti, setDeleteModalMulti] = useState<boolean>(false);
-
-  const [invoice, setInvoice] = useState<any>(null);
-
-  useEffect(() => {
-    if (invoices && !invoices.length) {
-      dispatch(onGetInvoices());
-    }
-  }, [dispatch, invoices]);
+  const [selectedOrder, setSelectedOrder] = useState<IOrder | null>(null);
+  const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
+  const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState<HTMLInputElement[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [sortedDropOffs, setSortedDropOffs] = useState<{ [key: string]: string[] }>({});
+  const [addresses, setAddresses] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
-    setInvoice(invoices);
-  }, [invoices]);
+    const fetchOrders = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
 
-  // Delete Data
-  const onClickDelete = (invoice: any) => {
-    setInvoice(invoice);
+        const response = await fetch("http://localhost:4000/order/listOrder", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const orderData = await response.json();
+          console.log("Fetched orders response:", orderData);
+          setOrders(orderData.data || []);
+          orderData.data.forEach((order: IOrder) => {
+            console.log(`Order ID: ${order._id}, Vehicle ID: ${order.vehicleID}`);
+          });
+        } else {
+          throw new Error("Failed to fetch orders");
+        }
+      } catch (error: unknown) {
+        console.error("Error fetching orders:", error);
+        setError("Error fetching orders");
+      }
+    };
+
+    const fetchVehicles = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch("http://localhost:4000/vehicle/listVehicle", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const vehicleData = await response.json();
+          console.log("Fetched vehicles response:", vehicleData);
+          setVehicles(vehicleData.data || []);
+        } else {
+          throw new Error("Failed to fetch vehicles");
+        }
+      } catch (error: unknown) {
+        console.error("Error fetching vehicles:", error);
+        setError("Error fetching vehicles");
+      }
+    };
+
+    const fetchDrivers = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch("http://localhost:4000/auth/users", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const driverData = await response.json();
+          console.log("Fetched drivers response:", driverData);
+          setDrivers(driverData.data || []);
+        } else {
+          throw new Error("Failed to fetch drivers");
+        }
+      } catch (error: unknown) {
+        console.error("Error fetching drivers:", error);
+        setError("Error fetching drivers");
+      }
+    };
+
+    fetchOrders();
+    fetchVehicles();
+    fetchDrivers();
+  }, []);
+
+  const onClickDelete = (order: IOrder) => {
+    setSelectedOrder(order);
     setDeleteModal(true);
   };
 
-  const handleDeleteInvoice = () => {
-    if (invoice) {
-      dispatch(onDeleteInvoice(invoice._id));
-      setDeleteModal(false);
+  const handleDeleteOrder = async () => {
+    if (selectedOrder) {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch(`http://localhost:4000/order/deleteOrder/${selectedOrder._id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          setOrders(orders.filter((order) => order._id !== selectedOrder._id));
+          setDeleteModal(false);
+          toast.success("Order deleted successfully");
+        } else {
+          throw new Error("Failed to delete order");
+        }
+      } catch (error: unknown) {
+        console.error("Error deleting order:", error);
+        setError("Error deleting order");
+      }
     }
   };
 
+  const handleDeleteMultipleOrders = async () => {
+    const deletedOrderIds: string[] = [];
 
-  const handleValidDate = (date: any) => {
-    const date1 = moment(new Date(date)).format("DD MMM Y");
-    return date1;
-  };
+    for (const element of selectedCheckBoxDelete) {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
 
-  const handleValidTime = (time: any) => {
-    const time1 = new Date(time);
-    const getHour = time1.getUTCHours();
-    const getMin = time1.getUTCMinutes();
-    const getTime = `${getHour}:${getMin}`;
-    var meridiem = "";
-    if (getHour >= 12) {
-      meridiem = "PM";
-    } else {
-      meridiem = "AM";
+        const response = await fetch(`http://localhost:4000/order/deleteOrder/${element.value}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          deletedOrderIds.push(element.value);
+        } else {
+          throw new Error(`Failed to delete order ${element.value}`);
+        }
+      } catch (error: unknown) {
+        console.error(`Error deleting order ${element.value}:`, error);
+        setError("Error deleting selected orders");
+      }
     }
-    const updateTime = moment(getTime, 'hh:mm').format('hh:mm') + " " + meridiem;
-    return updateTime;
+
+    // Update orders state
+    if (deletedOrderIds.length > 0) {
+      setOrders((prevOrders) => prevOrders.filter((order) => !deletedOrderIds.includes(order._id)));
+      setIsMultiDeleteButton(false);
+      setDeleteModalMulti(false);
+      (document.getElementById("checkBoxAll") as HTMLInputElement).checked = false;
+      toast.success("Selected orders deleted successfully");
+    }
   };
 
-  // Checked All
+  const deleteCheckbox = () => {
+    const ele = document.querySelectorAll(".orderCheckBox:checked") as NodeListOf<HTMLInputElement>;
+    setSelectedCheckBoxDelete(Array.from(ele));
+    setIsMultiDeleteButton(ele.length > 0);
+  };
+
   const checkedAll = useCallback(() => {
-    const checkall: any = document.getElementById("checkBoxAll");
-    const ele = document.querySelectorAll(".invoiceCheckBox");
+    const checkall = document.getElementById("checkBoxAll") as HTMLInputElement;
+    const ele = document.querySelectorAll(".orderCheckBox") as NodeListOf<HTMLInputElement>;
 
     if (checkall.checked) {
-      ele.forEach((ele: any) => {
+      ele.forEach((ele) => {
         ele.checked = true;
       });
     } else {
-      ele.forEach((ele: any) => {
+      ele.forEach((ele) => {
         ele.checked = false;
       });
     }
     deleteCheckbox();
   }, []);
 
-  // Delete Multiple
-  const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState([]);
-  const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
-
-  const deleteMultiple = () => {
-    const checkall: any = document.getElementById("checkBoxAll");
-    selectedCheckBoxDelete.forEach((element: any) => {
-      dispatch(onDeleteInvoice(element.value));
-      setTimeout(() => { toast.clearWaitingQueue(); }, 3000);
-    });
-    setIsMultiDeleteButton(false);
-    checkall.checked = false;
+  const getVehicleId = (vehicleID: string) => {
+    console.log("Vehicle ID from order:", vehicleID); // Add this line
+    console.log("Vehicles:", vehicles); // Add this line
+    const vehicle = vehicles.find((v) => v._id === vehicleID);
+    return vehicle ? vehicle.vehicleId : "N/A";
   };
 
-  const deleteCheckbox = () => {
-    const ele: any = document.querySelectorAll(".invoiceCheckBox:checked");
-    ele.length > 0 ? setIsMultiDeleteButton(true) : setIsMultiDeleteButton(false);
-    setSelectedCheckBoxDelete(ele);
+  const getDriverName = (driverID: string) => {
+    const driver = drivers.find((d) => d._id === driverID);
+    return driver ? driver.firstname : "N/A";
   };
 
-  //Column
+  const getAddress = async (lat: number, lng: number): Promise<string> => {
+    const key = `${lat},${lng}`;
+    if (addresses[key]) {
+      return addresses[key];
+    } else {
+      try {
+        const address = await getGeocodeAddress(lat, lng);
+        setAddresses((prev) => ({ ...prev, [key]: address }));
+        return address;
+      } catch (error: unknown) {
+        console.error("Error fetching address:", error);
+        return "Unknown address";
+      }
+    }
+  };
+
+  const handleDropDownClick = async (orderID: string) => {
+    if (!sortedDropOffs[orderID]) {
+      const order = orders.find((o) => o._id === orderID);
+      if (order) {
+        try {
+          const sorted = await sortDropOffsByDistance(order.drop_off);
+          setSortedDropOffs((prev) => ({ ...prev, [orderID]: sorted }));
+        } catch (error: unknown) {
+          setError(`Failed to sort drop-offs by distance: ${(error as Error).message}`);
+        }
+      }
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
-        header: <input type="checkbox" id="checkBoxAll" className="form-check-input" onClick={() => checkedAll()} />,
+        header: (
+          <input
+            type="checkbox"
+            id="checkBoxAll"
+            className="form-check-input"
+            onClick={() => checkedAll()}
+          />
+        ),
         cell: (cell: any) => {
-          return <input type="checkbox" className="invoiceCheckBox form-check-input" value={cell.getValue()} onChange={() => deleteCheckbox()} />;
+          return (
+            <input
+              type="checkbox"
+              className="orderCheckBox form-check-input"
+              value={cell.getValue()}
+              onChange={() => deleteCheckbox()}
+            />
+          );
         },
-        id: '#',
+        id: "#",
         accessorKey: "_id",
         enableColumnFilter: false,
         enableSorting: false,
       },
       {
-        header: "ID",
-        accessorKey: "invoiceId",
+        header: "No.",
+        accessorKey: "_id",
         enableColumnFilter: false,
         cell: (cell: any) => {
-          return <Link to="/apps-invoices-details" className="fw-medium link-primary">{cell.getValue()}</Link>;
+          return <span>{cell.row.index + 1}</span>;
         },
       },
       {
-        header: "Customer",
-        accessorKey: "name",
+        header: "Pick Up Date",
+        accessorKey: "datePickUp",
         enableColumnFilter: false,
-        cell: (cell: any) => (
-          <>
-            <div className="d-flex align-items-center">
-              {cell.row.original.img ? <img
-                src={process.env.REACT_APP_API_URL + "/images/users/" + cell.row.original.img}
-                alt=""
-                className="avatar-xs rounded-circle me-2"
-              /> :
-                <div className="flex-shrink-0 avatar-xs me-2">
-                  <div className="avatar-title bg-success-subtle text-success rounded-circle fs-13">
-                    {cell.row.original.name.charAt(0) + cell.row.original.name.split(" ").slice(-1).toString().charAt(0)}
-                  </div>
-                </div>}
-              {cell.getValue()}
-            </div>
-          </>
-        ),
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
       },
       {
-        header: "EMAIL",
-        accessorKey: "email",
+        header: "Pick Up Time",
+        accessorKey: "timePickUp",
         enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
       },
       {
-        header: "COUNTRY",
-        accessorKey: "country",
+        header: "Drop Off Date",
+        accessorKey: "dateDropOff",
         enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
       },
       {
-        header: "DATE",
-        accessorKey: "date",
+        header: "Drop Off Time",
+        accessorKey: "timeDropOff",
         enableColumnFilter: false,
-        cell: (cell: any) => (
-          <>
-            {handleValidDate(cell.getValue())},{" "}
-            <small className="text-muted">{handleValidTime(cell.getValue())}</small>
-          </>
-        ),
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
       },
       {
-        header: "AMOUNT",
-        accessorKey: "amount",
+        header: "Vehicle",
+        accessorKey: "vehicleID",
         enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{getVehicleId(cell.getValue())}</span>;
+        },
       },
       {
-        header: "PAYMENT STATUS",
-        accessorKey: "status",
+        header: "Driver",
+        accessorKey: "driver",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{getDriverName(cell.getValue())}</span>;
+        },
+      },
+      {
+        header: "Pick Up Location",
+        accessorKey: "pick_up",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          const coordinates = cell.getValue().split(",");
+          const lat = parseFloat(coordinates[0]);
+          const lng = parseFloat(coordinates[1]);
+          const key = `${lat},${lng}`;
+          const address = addresses[key] || cell.getValue();
+          getAddress(lat, lng);
+          return <span>{address}</span>;
+        },
+      },
+      {
+        header: "Drop Off Locations",
+        accessorKey: "drop_off",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          const orderID = cell.row.original._id;
+          const dropOffs = sortedDropOffs[orderID] || cell.getValue();
+
+          return (
+            <UncontrolledDropdown onClick={() => handleDropDownClick(orderID)}>
+              <DropdownToggle href="#" className="btn btn-soft-secondary btn-sm" tag="button">
+                <FeatherIcon icon="map-pin" className="icon-sm" />
+              </DropdownToggle>
+              <DropdownMenu>
+                {dropOffs.map((location: string, index: number) => {
+                  const coordinates = location.split(",");
+                  const lat = parseFloat(coordinates[0]);
+                  const lng = parseFloat(coordinates[1]);
+                  const key = `${lat},${lng}`;
+                  const address = addresses[key] || location;
+                  getAddress(lat, lng);
+                  return <DropdownItem key={index}>{address}</DropdownItem>;
+                })}
+              </DropdownMenu>
+            </UncontrolledDropdown>
+          );
+        },
+      },
+      {
+        header: "Consumer",
+        accessorKey: "consumer",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Income",
+        accessorKey: "income",
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
+        header: "Status",
+        accessorKey: "orderStatus",
         enableColumnFilter: false,
         cell: (cell: any) => {
           switch (cell.getValue()) {
-            case "Paid":
-              return <span className="badge text-uppercase bg-success-subtle text-success"> {cell.getValue()} </span>;
-            case "Unpaid":
-              return <span className="badge text-uppercase bg-warning-subtle text-warning"> {cell.getValue()} </span>;
-            case "Cancel":
-              return <span className="badge text-uppercase bg-danger-subtle text-danger"> {cell.getValue()} </span>;
+            case "Start":
+              return <span className="badge text-uppercase bg-success-subtle text-success">{cell.getValue()}</span>;
+            case "In Progress":
+              return <span className="badge text-uppercase bg-warning-subtle text-warning">{cell.getValue()}</span>;
+            case "Completed":
+              return <span className="badge text-uppercase bg-primary-subtle text-primary">{cell.getValue()}</span>;
             default:
-              return <span className="badge text-uppercase bg-primary-subtle text-primary"> {cell.getValue()} </span>;
+              return <span className="badge text-uppercase bg-secondary-subtle text-secondary">{cell.getValue()}</span>;
           }
-        }
+        },
       },
       {
         header: "Action",
         cell: (cellProps: any) => {
           return (
-            <UncontrolledDropdown >
-              <DropdownToggle
-                href="#"
-                className="btn btn-soft-secondary btn-sm dropdown"
-                tag="button"
-              >
+            <UncontrolledDropdown>
+              <DropdownToggle href="#" className="btn btn-soft-secondary btn-sm dropdown" tag="button">
                 <i className="ri-more-fill align-middle"></i>
               </DropdownToggle>
               <DropdownMenu className="dropdown-menu-end">
-                <DropdownItem href="/apps-invoices-details">
-                  <i className="ri-eye-fill align-bottom me-2 text-muted"></i>{" "}
-                  View
-                </DropdownItem>
-
-                <DropdownItem href="/apps-invoices-create">
-                  <i className="ri-pencil-fill align-bottom me-2 text-muted"></i>{" "}
-                  Edit
-                </DropdownItem>
-
-                <DropdownItem href="/#">
-                  <i className="ri-download-2-line align-bottom me-2 text-muted"></i>{" "}
-                  Download
-                </DropdownItem>
-
-                <DropdownItem divider />
-
-                <DropdownItem
-                  href="#"
-                  onClick={() => { const invoiceData = cellProps.row.original; onClickDelete(invoiceData); }}
-                >
-                  <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i>{" "}
-                  Delete
+                <DropdownItem onClick={() => onClickDelete(cellProps.row.original)}>
+                  <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete
                 </DropdownItem>
               </DropdownMenu>
             </UncontrolledDropdown>
@@ -274,106 +442,41 @@ const Order = () => {
         },
       },
     ],
-    [checkedAll]
+    [checkedAll, vehicles, drivers, sortedDropOffs, deleteCheckbox, addresses]
   );
 
-  document.title = "Invoice List | Velzon - React Admin & Dashboard Template";
+  document.title = "Orders List";
 
   return (
     <React.Fragment>
       <div className="page-content">
         <DeleteModal
           show={deleteModal}
-          onDeleteClick={() => handleDeleteInvoice()}
+          onDeleteClick={handleDeleteOrder}
           onCloseClick={() => setDeleteModal(false)}
         />
         <DeleteModal
           show={deleteModalMulti}
-          onDeleteClick={() => {
-            deleteMultiple();
-            setDeleteModalMulti(false);
-          }}
+          onDeleteClick={handleDeleteMultipleOrders}
           onCloseClick={() => setDeleteModalMulti(false)}
         />
         <Container fluid>
-          <BreadCrumb title="Order List" pageTitle="Invoices" />
-          {/* <Row>
-            {invoiceWidgets.map((invoicewidget, key) => (
-              <React.Fragment key={key}>
-                <Col xl={3} md={6}>
-                  <Card className="card-animate">
-                    <CardBody>
-                      <div className="d-flex align-items-center">
-                        <div className="flex-grow-1">
-                          <p className="text-uppercase fw-medium text-muted mb-0">
-                            {invoicewidget.label}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <h5
-                            className={
-                              "fs-14 mb-0 text-" + invoicewidget.percentageClass
-                            }
-                          >
-                            <i className="ri-arrow-right-up-line fs-13 align-middle"></i>{" "}
-                            {invoicewidget.percentage}
-                          </h5>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-end justify-content-between mt-4">
-                        <div>
-                          <h4 className="fs-22 fw-semibold ff-secondary mb-4">
-                            <CountUp
-                              start={0}
-                              prefix={invoicewidget.prefix}
-                              suffix={invoicewidget.suffix}
-
-                              end={invoicewidget.counter}
-                              duration={4}
-                              className="counter-value"
-                            />
-                          </h4>
-                          <span className="badge bg-warning me-1">
-                            {invoicewidget.badge}
-                          </span>{" "}
-                          <span className="text-muted">
-                            {" "}
-                            {invoicewidget.caption}
-                          </span>
-                        </div>
-                        <div className="avatar-sm flex-shrink-0">
-                          <span className="avatar-title bg-light rounded fs-3">
-                            <FeatherIcon
-                              icon={invoicewidget.feaIcon}
-                              className="text-success icon-dual-success"
-                            />
-                          </span>
-                        </div>
-                      </div>
-                    </CardBody>
-                  </Card>
-                </Col>
-              </React.Fragment>
-            ))}
-          </Row> */}
-
+          <BreadCrumb title="Order List" pageTitle="Orders" />
           <Row>
             <Col lg={12}>
-              <Card id="invoiceList">
+              <Card id="orderList" className="hide-checkbox hide-select-and-filters">
                 <CardHeader className="border-0">
                   <div className="d-flex align-items-center">
-                    <h5 className="card-title mb-0 flex-grow-1">Invoices</h5>
+                    <h5 className="card-title mb-0 flex-grow-1">Orders</h5>
                     <div className="flex-shrink-0">
                       <div className="d-flex gap-2 flex-wrap">
-                        {isMultiDeleteButton && <button className="btn btn-primary me-1"
-                          onClick={() => setDeleteModalMulti(true)}
-                        ><i className="ri-delete-bin-2-line"></i></button>}
-                        <Link
-                          to="/apps-invoices-create"
-                          className="btn btn-danger"
-                        >
-                          <i className="ri-add-line align-bottom me-1"></i> Create
-                          Order
+                        {isMultiDeleteButton && (
+                          <button className="btn btn-primary me-1" onClick={() => setDeleteModalMulti(true)}>
+                            <i className="ri-delete-bin-2-line"></i>
+                          </button>
+                        )}
+                        <Link to="/order-create" className="btn btn-danger">
+                          <i className="ri-add-line align-bottom me-1"></i> Create Order
                         </Link>
                       </div>
                     </div>
@@ -381,18 +484,19 @@ const Order = () => {
                 </CardHeader>
                 <CardBody className="pt-0">
                   <div>
-                    {isInvoiceSuccess && invoices.length ? (
+                    {Array.isArray(orders) && orders.length > 0 ? (
                       <TableContainer
                         columns={columns}
-                        data={(invoices || [])}
+                        data={orders}
                         isGlobalFilter={true}
                         customPageSize={10}
-                        isInvoiceListFilter={true}
+                        isInvoiceListFilter={false}
                         theadClass="text-muted text-uppercase"
-                        SearchPlaceholder='Search for customer, email, country, status or something...'
+                        SearchPlaceholder="Search for order, customer, location or something..."
                       />
-                    ) : (<Loader error={error} />)
-                    }
+                    ) : (
+                      <div>No orders found</div>
+                    )}
                     <ToastContainer closeButton={false} limit={1} />
                   </div>
                 </CardBody>
@@ -405,4 +509,4 @@ const Order = () => {
   );
 };
 
-export default Order;
+export default OrderList;
