@@ -121,7 +121,7 @@ const CarCreate = () => {
                   <button
                     className="btn btn-danger"
                     onClick={() => {
-                      window.history.back();
+                      navigate("/car");
                     }}
                   >
                     Back

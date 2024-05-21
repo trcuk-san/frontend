@@ -8,6 +8,8 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@fortawesome/fontawesome-free": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/react-fontawesome": "^0.2.1",
     "@fullcalendar/bootstrap": "^6.1.10",
     "@fullcalendar/core": "^6.1.10",
     "@fullcalendar/daygrid": "^6.1.10",
@@ -53,6 +55,7 @@
     "google-maps-react": "^2.0.6",
     "gridjs": "^6.0.6",
     "gridjs-react": "^6.0.1",
+    "html-to-image": "^1.11.11",
     "i18next": "^23.7.8",
     "i18next-browser-languagedetector": "^7.2.0",
     "jwt-decode": "^4.0.0",
@@ -135,6 +138,7 @@
   },
   "devDependencies": {
     "@types/feather-icons": "^4.29.4",
-    "@types/google.maps": "^3.55.9"
+    "@types/google.maps": "^3.55.9",
+    "@types/store": "^2.0.5"
   }
 }

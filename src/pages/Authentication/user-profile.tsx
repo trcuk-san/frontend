@@ -14,7 +14,6 @@ import {
 } from "reactstrap";
 import {jwtDecode} from "jwt-decode";
 import avatar from "../../assets/images/users/avatar-1.jpg";
-import { createSelector } from "reselect";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import FeatherIcon from "feather-icons-react";
@@ -32,6 +31,7 @@ interface User {
   createdAt: string;
   updatedAt: string;
   __v: number;
+  type: string; // New field
 }
 
 interface IOrder {
@@ -68,6 +68,7 @@ const UserProfile = () => {
   const [userName, setUserName] = useState("Admin");
   const [profilePicture, setProfilePicture] = useState(avatar);
   const [phone, setPhone] = useState("N/A");
+  const [userType, setUserType] = useState("User"); // New state for user type
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
@@ -100,6 +101,7 @@ const UserProfile = () => {
           setIdx(userData._id);
           setPhone(userData.phone);
           setProfilePicture(userData.profile_picture || avatar);
+          setUserType(userData.type); // Set user type
         } else {
           console.error("No user data in response:", response.statusText);
           setError("No user data found");
@@ -315,6 +317,7 @@ const UserProfile = () => {
                         <p className="mb-0">Id No : #{idx}</p>
                         <p className="mb-1">Email : {email}</p>
                         <p className="mb-1">Phone : {phone}</p>
+                        <p className="mb-1">Type : {userType}</p> {/* Display user type */}
                       </div>
                     </div>
                   </div>

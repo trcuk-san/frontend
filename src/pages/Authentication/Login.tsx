@@ -59,17 +59,14 @@ const Login: React.FC = () => {
     <ParticlesAuth>
       <div className="auth-page-content mt-lg-5">
         <Container>
-          <Row>
+          <Row> 
             <Col lg={12}>
               <div className="text-center mt-sm-5 mb-4 text-white-50">
                 <div>
                   <Link to="/" className="d-inline-block auth-logo">
-                    <img src={logoLight} alt="" height="20" />
+                    <img src={logoLight} alt="" height="150" />
                   </Link>
                 </div>
-                <p className="mt-3 fs-15 fw-medium">
-                  Premium Admin & Dashboard Template
-                </p>
               </div>
             </Col>
           </Row>
@@ -80,7 +77,7 @@ const Login: React.FC = () => {
                 <CardBody className="p-4">
                   <div className="text-center mt-2">
                     <h5 className="text-primary">Welcome Back !</h5>
-                    <p className="text-muted">Sign in to continue to Velzon.</p>
+                    <p className="text-muted">Sign in to continue .</p>
                   </div>
                   <div className="p-2 mt-4">
                     <Form onSubmit={handleSubmit}>
@@ -168,43 +165,10 @@ const Login: React.FC = () => {
                           Sign In
                         </Button>
                       </div>
-
-                      <div className="mt-4 text-center">
-                        <div className="signin-other-title">
-                          <h5 className="fs-13 mb-4 title">Sign In with</h5>
-                        </div>
-                        <div>
-                          <Button color="primary" className="btn-icon">
-                            <i className="ri-facebook-fill fs-16"></i>
-                          </Button>{" "}
-                          <Button color="danger" className="btn-icon">
-                            <i className="ri-google-fill fs-16"></i>
-                          </Button>{" "}
-                          <Button color="dark" className="btn-icon">
-                            <i className="ri-github-fill fs-16"></i>
-                          </Button>{" "}
-                          <Button color="info" className="btn-icon">
-                            <i className="ri-twitter-fill fs-16"></i>
-                          </Button>{" "}
-                        </div>
-                      </div>
                     </Form>
                   </div>
                 </CardBody>
               </Card>
-
-              <div className="mt-4 text-center">
-                <p className="mb-0">
-                  Don't have an account ?{" "}
-                  <Link
-                    to="/register"
-                    className="fw-semibold text-primary text-decoration-underline"
-                  >
-                    {" "}
-                    Signup{" "}
-                  </Link>{" "}
-                </p>
-              </div>
             </Col>
           </Row>
         </Container>

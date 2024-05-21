@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Container, Row, Col, Card, CardBody, UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem, Button, Alert, CardHeader } from "reactstrap";
+import { Container, Row, Col, Card, CardBody, UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem, CardHeader, Modal, ModalHeader, ModalBody, ModalFooter, Button, Form, FormGroup, Label, Input, InputGroup, InputGroupText } from "reactstrap";
 import { Link, useNavigate } from "react-router-dom";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
@@ -8,6 +8,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useDispatch } from "react-redux";
 import DeleteModal from "../../Components/Common/DeleteModal";
+import MapModal from "../../services/map/MapModal";
+import '@fortawesome/fontawesome-free/css/all.min.css'; // Import FontAwesome CSS
 
 interface IOrder {
   _id: string;
@@ -31,102 +33,91 @@ interface IOrder {
 
 const OrderList = () => {
   const navigate = useNavigate();
-  const dispatch: any = useDispatch();
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [deleteModalMulti, setDeleteModalMulti] = useState<boolean>(false);
+  const [editModal, setEditModal] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<IOrder | null>(null);
   const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
-  const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState<HTMLInputElement[]>([]);
+  const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<IOrder>({
+    _id: "",
+    datePickUp: "",
+    timePickUp: "",
+    dateDropOff: "",
+    timeDropOff: "",
+    vehicle: "",
+    driver: "",
+    pick_up: "",
+    drop_off: [],
+    consumer: "",
+    income: 0,
+    oilFee: 0,
+    tollwayFee: 0,
+    otherFee: 0,
+    remark: "",
+    orderStatus: "Unstart",
+    invoiced: false,
+  });
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [selectedDropOffIndex, setSelectedDropOffIndex] = useState<number | null>(null);
+
+  const fetchData = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No token found");
+    }
+
+    try {
+      const orderResponse = await fetch("http://localhost:4000/order/listOrder", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (orderResponse.ok) {
+        const orderData = await orderResponse.json();
+        setOrders(orderData.data || []);
+      } else {
+        throw new Error("Failed to fetch orders");
+      }
+
+      const vehicleResponse = await fetch("http://localhost:4000/vehicle/listVehicle", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (vehicleResponse.ok) {
+        const vehicleData = await vehicleResponse.json();
+        setVehicles(vehicleData.data || []);
+      } else {
+        throw new Error("Failed to fetch vehicles");
+      }
+
+      const driverResponse = await fetch("http://localhost:4000/auth/users", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (driverResponse.ok) {
+        const driverData = await driverResponse.json();
+        setDrivers(driverData.data || []);
+      } else {
+        throw new Error("Failed to fetch drivers");
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError("Error fetching data");
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("No token found");
-        }
-
-        const response = await fetch("http://localhost:4000/order/listOrder", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const orderData = await response.json();
-          console.log("Fetched orders response:", orderData);
-          setOrders(orderData.data || []);
-          orderData.data.forEach((order: IOrder) => {
-            console.log(`Order ID: ${order._id}, Vehicle ID: ${order.vehicle}`);
-          });
-        } else {
-          throw new Error("Failed to fetch orders");
-        }
-      } catch (error: unknown) {
-        console.error("Error fetching orders:", error);
-        setError("Error fetching orders");
-      }
-    };
-
-    const fetchVehicles = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("No token found");
-        }
-
-        const response = await fetch("http://localhost:4000/vehicle/listVehicle", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const vehicleData = await response.json();
-          console.log("Fetched vehicles response:", vehicleData);
-          setVehicles(vehicleData.data || []);
-        } else {
-          throw new Error("Failed to fetch vehicles");
-        }
-      } catch (error: unknown) {
-        console.error("Error fetching vehicles:", error);
-        setError("Error fetching vehicles");
-      }
-    };
-
-    const fetchDrivers = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("No token found");
-        }
-
-        const response = await fetch("http://localhost:4000/auth/users", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const driverData = await response.json();
-          console.log("Fetched drivers response:", driverData);
-          setDrivers(driverData.data || []);
-        } else {
-          throw new Error("Failed to fetch drivers");
-        }
-      } catch (error: unknown) {
-        console.error("Error fetching drivers:", error);
-        setError("Error fetching drivers");
-      }
-    };
-
-    fetchOrders();
-    fetchVehicles();
-    fetchDrivers();
+    fetchData();
   }, []);
 
   const onClickDelete = (order: IOrder) => {
@@ -156,7 +147,7 @@ const OrderList = () => {
         } else {
           throw new Error("Failed to delete order");
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error("Error deleting order:", error);
         setError("Error deleting order");
       }
@@ -166,14 +157,14 @@ const OrderList = () => {
   const handleDeleteMultipleOrders = async () => {
     const deletedOrderIds: string[] = [];
 
-    for (const element of selectedCheckBoxDelete) {
+    for (const id of selectedCheckBoxDelete) {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
           throw new Error("No token found");
         }
 
-        const response = await fetch(`http://localhost:4000/order/deleteOrder/${element.value}`, {
+        const response = await fetch(`http://localhost:4000/order/deleteOrder/${id}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -181,17 +172,16 @@ const OrderList = () => {
         });
 
         if (response.ok) {
-          deletedOrderIds.push(element.value);
+          deletedOrderIds.push(id);
         } else {
-          throw new Error(`Failed to delete order ${element.value}`);
+          throw new Error(`Failed to delete order ${id}`);
         }
-      } catch (error: unknown) {
-        console.error(`Error deleting order ${element.value}:`, error);
+      } catch (error) {
+        console.error(`Error deleting order ${id}:`, error);
         setError("Error deleting selected orders");
       }
     }
 
-    // Update orders state
     if (deletedOrderIds.length > 0) {
       setOrders((prevOrders) => prevOrders.filter((order) => !deletedOrderIds.includes(order._id)));
       setIsMultiDeleteButton(false);
@@ -202,37 +192,124 @@ const OrderList = () => {
   };
 
   const deleteCheckbox = () => {
-    const ele = document.querySelectorAll(".orderCheckBox:checked") as NodeListOf<HTMLInputElement>;
-    setSelectedCheckBoxDelete(Array.from(ele));
-    setIsMultiDeleteButton(ele.length > 0);
+    const checkboxes = document.querySelectorAll(".orderCheckBox:checked") as NodeListOf<HTMLInputElement>;
+    const selectedIds = Array.from(checkboxes).map((checkbox) => checkbox.value);
+    setSelectedCheckBoxDelete(selectedIds);
+    setIsMultiDeleteButton(selectedIds.length > 0);
   };
 
   const checkedAll = useCallback(() => {
     const checkall = document.getElementById("checkBoxAll") as HTMLInputElement;
-    const ele = document.querySelectorAll(".orderCheckBox") as NodeListOf<HTMLInputElement>;
+    const checkboxes = document.querySelectorAll(".orderCheckBox") as NodeListOf<HTMLInputElement>;
 
     if (checkall.checked) {
-      ele.forEach((ele) => {
-        ele.checked = true;
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = true;
       });
     } else {
-      ele.forEach((ele) => {
-        ele.checked = false;
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = false;
       });
     }
     deleteCheckbox();
   }, []);
 
   const getVehicleId = (vehicleID: string) => {
-    console.log("Vehicle ID from order:", vehicleID); // Add this line
-    console.log("Vehicles:", vehicles); // Add this line
-    const vehicleid = vehicles.find((v) => v._id === vehicleID);
-    return vehicleid ? vehicleid.vehicleId : "N/A";
+    const vehicle = vehicles.find((v) => v._id === vehicleID);
+    return vehicle ? vehicle.vehicleId : "N/A";
   };
 
   const getDriverName = (driverID: string) => {
     const driver = drivers.find((d) => d._id === driverID);
     return driver ? driver.firstname : "N/A";
+  };
+
+  const onClickEdit = (order: IOrder) => {
+    setSelectedOrder(order);
+    setEditFormData(order);
+    setEditModal(true);
+  };
+
+  const handleEditOrder = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No token found");
+      }
+
+      const response = await fetch(`http://localhost:4000/order/updateOrder/${selectedOrder?._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (response.ok) {
+        const updatedOrder = await response.json();
+        setOrders(orders.map((order) => (order._id === updatedOrder._id ? updatedOrder : order)));
+        setEditModal(false);
+        toast.success("Order updated successfully");
+      } else {
+        throw new Error("Failed to update order");
+      }
+    } catch (error) {
+      console.error("Error updating order:", error);
+      setError("Error updating order");
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setEditFormData({
+      ...editFormData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
+    const { lat, lng, address } = location;
+    const formattedLocation = `${address},${lat},${lng}`;
+
+    if (selectedDropOffIndex !== null) {
+      const updatedDropOff = editFormData.drop_off.map((dropOff, i) => (i === selectedDropOffIndex ? formattedLocation : dropOff));
+      setEditFormData((prevState) => ({
+        ...prevState,
+        drop_off: updatedDropOff,
+      }));
+    } else {
+      setEditFormData((prevState) => ({
+        ...prevState,
+        pick_up: address,
+      }));
+    }
+    setSelectedDropOffIndex(null);
+  };
+
+  const handleAddDropOff = () => {
+    setEditFormData((prevState) => ({
+      ...prevState,
+      drop_off: [...prevState.drop_off, ""],
+    }));
+  };
+
+  const handleDropOffChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, index: number) => {
+    const { value } = e.target;
+    const updatedDropOff = editFormData.drop_off.map((dropOff, i) =>
+      i === index ? value : dropOff
+    );
+    setEditFormData((prevState) => ({
+      ...prevState,
+      drop_off: updatedDropOff,
+    }));
+  };
+
+  const handleRemoveDropOff = (index: number) => {
+    const updatedDropOff = editFormData.drop_off.filter((_, i) => i !== index);
+    setEditFormData((prevState) => ({
+      ...prevState,
+      drop_off: updatedDropOff,
+    }));
   };
 
   const columns = useMemo(
@@ -338,7 +415,8 @@ const OrderList = () => {
               </DropdownToggle>
               <DropdownMenu>
                 {dropOffs.map((location: string, index: number) => {
-                  const address = location.split(",")[0];
+                  const parts = location.split(",");
+                  const address = parts.slice(0, -2).join(",");
                   return <DropdownItem key={index}>{address}</DropdownItem>;
                 })}
               </DropdownMenu>
@@ -368,12 +446,16 @@ const OrderList = () => {
         enableColumnFilter: false,
         cell: (cell: any) => {
           switch (cell.getValue()) {
+            case "Unstart":
+              return <span className="badge text-uppercase bg-secondary-subtle text-secondary">{cell.getValue()}</span>;
             case "Start":
               return <span className="badge text-uppercase bg-success-subtle text-success">{cell.getValue()}</span>;
-            case "In Progress":
+            case "Sending":
               return <span className="badge text-uppercase bg-warning-subtle text-warning">{cell.getValue()}</span>;
-            case "Completed":
+            case "Finished":
               return <span className="badge text-uppercase bg-primary-subtle text-primary">{cell.getValue()}</span>;
+            case "Cancel":
+              return <span className="badge text-uppercase bg-danger-subtle text-danger">{cell.getValue()}</span>;
             default:
               return <span className="badge text-uppercase bg-secondary-subtle text-secondary">{cell.getValue()}</span>;
           }
@@ -388,8 +470,11 @@ const OrderList = () => {
                 <i className="ri-more-fill align-middle"></i>
               </DropdownToggle>
               <DropdownMenu className="dropdown-menu-end">
-              <DropdownItem onClick={() => navigate(`/order/${cellProps.row.original._id}`)}>
+                <DropdownItem onClick={() => navigate(`/order/${cellProps.row.original._id}`)}>
                   <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
+                </DropdownItem>
+                <DropdownItem onClick={() => onClickEdit(cellProps.row.original)}>
+                  <i className="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit
                 </DropdownItem>
                 <DropdownItem onClick={() => onClickDelete(cellProps.row.original)}>
                   <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete
@@ -418,6 +503,142 @@ const OrderList = () => {
           onDeleteClick={handleDeleteMultipleOrders}
           onCloseClick={() => setDeleteModalMulti(false)}
         />
+        <Modal isOpen={editModal} toggle={() => setEditModal(!editModal)}>
+          <ModalHeader toggle={() => setEditModal(!editModal)}>Edit Order</ModalHeader>
+          <ModalBody>
+            <Form>
+              <FormGroup>
+                <Label for="datePickUp">Pick Up Date</Label>
+                <Input type="date" name="datePickUp" id="datePickUp" value={editFormData.datePickUp} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="timePickUp">Pick Up Time</Label>
+                <Input type="time" name="timePickUp" id="timePickUp" value={editFormData.timePickUp} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="dateDropOff">Drop Off Date</Label>
+                <Input type="date" name="dateDropOff" id="dateDropOff" value={editFormData.dateDropOff} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="timeDropOff">Drop Off Time</Label>
+                <Input type="time" name="timeDropOff" id="timeDropOff" value={editFormData.timeDropOff} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="vehicle">Vehicle</Label>
+                <Input type="select" name="vehicle" id="vehicle" value={editFormData.vehicle} onChange={handleChange}>
+                  <option value="">Select Vehicle</option>
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle._id} value={vehicle._id}>
+                      {vehicle.vehicleId}
+                    </option>
+                  ))}
+                </Input>
+              </FormGroup>
+              <FormGroup>
+                <Label for="driver">Driver</Label>
+                <Input type="select" name="driver" id="driver" value={editFormData.driver} onChange={handleChange}>
+                  <option value="">Select Driver</option>
+                  {drivers.map((driver) => (
+                    <option key={driver._id} value={driver._id}>
+                      {driver.firstname} {driver.lastname}
+                    </option>
+                  ))}
+                </Input>
+              </FormGroup>
+              <FormGroup>
+                <Label for="consumer">Consumer</Label>
+                <Input type="text" name="consumer" id="consumer" value={editFormData.consumer} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="income">Income</Label>
+                <Input type="number" name="income" id="income" value={editFormData.income} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="oilFee">Oil Fee</Label>
+                <Input type="number" name="oilFee" id="oilFee" value={editFormData.oilFee} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="tollwayFee">Tollway Fee</Label>
+                <Input type="number" name="tollwayFee" id="tollwayFee" value={editFormData.tollwayFee} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="otherFee">Other Fee</Label>
+                <Input type="number" name="otherFee" id="otherFee" value={editFormData.otherFee} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="remark">Remark</Label>
+                <Input type="text" name="remark" id="remark" value={editFormData.remark} onChange={handleChange} />
+              </FormGroup>
+              <FormGroup>
+                <Label for="orderStatus">Status</Label>
+                <Input type="select" name="orderStatus" id="orderStatus" value={editFormData.orderStatus} onChange={handleChange}>
+                  <option value="Unstart">Unstart</option>
+                  <option value="Start">Start</option>
+                  <option value="Sending">Sending</option>
+                  <option value="Finished">Finished</option>
+                  <option value="Cancel">Cancel</option>
+                </Input>
+              </FormGroup>
+              <FormGroup>
+                <Label for="invoiced">Invoiced</Label>
+                <Input type="select" name="invoiced" id="invoiced" value={editFormData.invoiced ? "true" : "false"} onChange={handleChange}>
+                  <option value="false">False</option>
+                  <option value="true">True</option>
+                </Input>
+              </FormGroup>
+              <FormGroup>
+                <Label for="pick_up">Pick Up Location</Label>
+                <InputGroup>
+                  <Input type="text" name="pick_up" id="pick_up" value={editFormData.pick_up} onChange={handleChange} />
+                  <InputGroupText>
+                    <i
+                      className="fa-solid fa-map-location"
+                      onClick={() => {
+                        setSelectedDropOffIndex(null);
+                        setIsMapModalOpen(true);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    ></i>
+                  </InputGroupText>
+                </InputGroup>
+              </FormGroup>
+              {editFormData.drop_off.map((location, index) => (
+                <FormGroup key={index}>
+                  <Label for={`drop_off${index}`}>Drop Off Location {index + 1}</Label>
+                  <InputGroup>
+                    <Input type="text" name={`drop_off${index}`} id={`drop_off${index}`} value={location} onChange={(e) => handleDropOffChange(e, index)} />
+                    <InputGroupText>
+                      <i
+                        className="fa-solid fa-map-location"
+                        onClick={() => {
+                          setSelectedDropOffIndex(index);
+                          setIsMapModalOpen(true);
+                        }}
+                        style={{ cursor: 'pointer', marginRight: '10px' }}
+                      ></i>
+                      {index !== 0 && (
+                        <Button color="danger" className="btn btn-sm" onClick={() => handleRemoveDropOff(index)}>
+                          -
+                        </Button>
+                      )}
+                    </InputGroupText>
+                  </InputGroup>
+                </FormGroup>
+              ))}
+              <Button onClick={handleAddDropOff} color="primary" className="btn btn-primary btn-sm" type="button">
+                Add Drop Off Location
+              </Button>
+            </Form>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="primary" onClick={handleEditOrder}>
+              Save
+            </Button>
+            <Button color="secondary" onClick={() => setEditModal(false)}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </Modal>
         <Container fluid>
           <BreadCrumb title="Order List" pageTitle="Orders" />
           <Row>
@@ -436,6 +657,7 @@ const OrderList = () => {
                         <Link to="/order-create" className="btn btn-danger">
                           <i className="ri-add-line align-bottom me-1"></i> Create Order
                         </Link>
+                        <Button color="success" onClick={fetchData}>Refresh Table</Button>
                       </div>
                     </div>
                   </div>
@@ -463,6 +685,11 @@ const OrderList = () => {
           </Row>
         </Container>
       </div>
+      <MapModal
+        isOpen={isMapModalOpen}
+        toggle={() => setIsMapModalOpen(!isMapModalOpen)}
+        onSelectLocation={(location) => handleLocationSelect(location)}
+      />
     </React.Fragment>
   );
 };

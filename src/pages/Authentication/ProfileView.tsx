@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Container, Row, Col, Card, CardBody, UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem, Alert } from "reactstrap";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
@@ -19,6 +19,7 @@ interface User {
   createdAt: string;
   updatedAt: string;
   __v: number;
+  type: string; // New field
 }
 
 interface IOrder {
@@ -55,6 +56,7 @@ const MemberProfile = () => {
   const [userName, setUserName] = useState("Admin");
   const [profilePicture, setProfilePicture] = useState(avatar);
   const [phone, setPhone] = useState("N/A");
+  const [userType, setUserType] = useState("User"); // New state for user type
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
@@ -89,6 +91,7 @@ const MemberProfile = () => {
           setIdx(memberData._id);
           setPhone(memberData.phone);
           setProfilePicture(memberData.profile_picture || avatar);
+          setUserType(memberData.type); // Set user type
         } else {
           const errorText = await response.text();
           throw new Error(`Failed to fetch member: ${response.status} ${response.statusText} - ${errorText}`);
@@ -391,6 +394,7 @@ const MemberProfile = () => {
                         <p className="mb-0">Id No : #{idx}</p>
                         <p className="mb-1">Email : {email}</p>
                         <p className="mb-1">Phone : {phone}</p>
+                        <p className="mb-1">Type : {userType}</p> {/* Display user type */}
                       </div>
                     </div>
                   </div>

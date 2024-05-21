@@ -75,9 +75,27 @@ const Navdata = () => {
              
             }
         },{
-            id: "invoices1",
-            label: "create",
-            icon: "ri-archive-2-line",
+            id: "receipt",
+            label: "receipt",
+            icon: "ri-file-text-line",
+            link: "/apps-invoices-create",
+            click: function (e: any) {
+                e.preventDefault();
+             
+            }
+        },{
+            id: "voucher",
+            label: "voucher",
+            icon: "ri-ticket-2-line",
+            link: "/apps-invoices-create",
+            click: function (e: any) {
+                e.preventDefault();
+             
+            }
+        },{
+            id: "history",
+            label: "history",
+            icon: "ri-history-line",
             link: "/apps-invoices-create",
             click: function (e: any) {
                 e.preventDefault();
