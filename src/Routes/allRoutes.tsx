@@ -49,12 +49,13 @@ import CrmLeads from "../pages/Crm/CrmLeads/index";
 // //Invoices
 import OrderPage from "../pages/Invoices/OrderPage";
 import Order from "../pages/Invoices/List";
-// import Car from "../pages/Invoices/CarList";
+import Car from "../pages/Invoices/CarList";
 import Member from "../pages/Invoices/List2";
 import Invoices1 from "../pages/Invoices/List4";
 import Invoices from "../pages/Invoices/InvoicesList";
 import OrderCreate from "../pages/Invoices/OrderCreate";
 import InvoiceDetails from "../pages/Invoices/InvoiceDetails";
+import OrderDetail from '../pages/Invoices/OrderDetail';
 // import List from "../pages/Invoices/List";
 // import Details from "../pages/Invoices/Details";
 
@@ -252,6 +253,9 @@ import Kanbanboard from "pages/Tasks/KanbanBoard";
 import CarCreate from "pages/Invoices/CarCreate";
 import InvoiceCreate from "../pages/Invoices/InvoiceCreate";
 import ReceiptList from "pages/Invoices/ReceiptList";
+import MemberProfile from "pages/Authentication/ProfileView";
+import VehicleDetail from "pages/Invoices/CarDetails";
+
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <DashboardEcommerce /> },
@@ -318,12 +322,16 @@ const authProtectedRoutes = [
 
   // //Invoices
   { path: "/order", component: <Order /> },
-  // { path: "/car", component: <Car /> },
+  { path: "/car", component: <Car /> },
+  { path: "/car/:id", component: <VehicleDetail /> },
   { path: "/member", component: <Member /> },
+  { path: "/profile/:userId", component: <MemberProfile /> },
   { path: "/invoices", component: <Invoices /> },
   { path: "/invoices1", component: <Invoices1 /> },
   { path: "/apps-invoices-details", component: <InvoiceDetails /> },
   { path: "/order-create", component: <OrderCreate /> },
+  { path: "/order/:id", component: <OrderDetail /> },
+  
   // { path: "/apps-invoices-list1", component: <List /> },
 
   // //Supports Tickets
@@ -479,6 +487,7 @@ const authProtectedRoutes = [
   { path: "/car-create", component: <CarCreate /> },
   { path: "/invoice-create", component: <InvoiceCreate /> },
   { path: "/receipt-list", component: <ReceiptList /> },
+
 ];
 
 const publicRoutes = [
@@ -518,7 +527,6 @@ const publicRoutes = [
 
   { path: "/pages-maintenance", component: <Maintenance /> },
   { path: "/pages-co  ming-soon", component: <ComingSoon /> },
-  { path: "/order", component: <OrderPage /> }, // เพิ่มหน้า OrderPage ที่ไม่ต้องการตรวจสอบสิทธิ์
   { path: "/", exact: true, component: <Navigate to="/dashboard" /> },
   { path: "*", component: <Navigate to="/dashboard" /> },
 ];

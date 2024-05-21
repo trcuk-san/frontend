@@ -20,7 +20,7 @@ import {
   Label,
   Input,
 } from "reactstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import FeatherIcon from "feather-icons-react";
@@ -41,6 +41,7 @@ interface IMember {
 }
 
 const Member: React.FC = () => {
+  const navigate = useNavigate();
   const [members, setMembers] = useState<IMember[]>([]);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [editModal, setEditModal] = useState<boolean>(false);
@@ -261,6 +262,9 @@ const Member: React.FC = () => {
                 <i className="ri-more-fill align-middle"></i>
               </DropdownToggle>
               <DropdownMenu className="dropdown-menu-end">
+              <DropdownItem onClick={() => navigate(`/profile/${cellProps.row.original._id}`)}>
+                <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
+              </DropdownItem>
                 <DropdownItem onClick={() => onClickEdit(cellProps.row.original)}>
                   <i className="ri-pencil-fill align-bottom me-2 text-muted"></i>{" "}
                   Edit
@@ -281,6 +285,7 @@ const Member: React.FC = () => {
     ],
     [checkedAll]
   );
+  
 
   document.title = "Members List";
 
