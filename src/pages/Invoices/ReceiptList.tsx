@@ -13,120 +13,81 @@ import {
 } from "reactstrap";
 import { Link } from "react-router-dom";
 import moment from "moment";
-import CountUp from "react-countup";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import DeleteModal from "../../Components/Common/DeleteModal";
-
-//Import Icons
-import FeatherIcon from "feather-icons-react";
-import { invoiceWidgets } from "../../common/data/invoiceList";
-
-//Import actions
-import {
-  getInvoices as onGetInvoices,
-  deleteInvoice as onDeleteInvoice,
-} from "../../slices/thunks";
-
-//redux
-import { useSelector, useDispatch } from "react-redux";
-
-import Loader from "../../Components/Common/Loader";
-
+import { listReceipt, deleteReceipt } from "../../services/receipts";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { createSelector } from "reselect";
-import { Form } from "formik";
 
-import { createInvoice, listInvoice } from "../../services/invoices";
-
-interface Iinvoice {
+interface IReceipt {
+  _id: string;
+  receiptId: string;
   customer: string;
   address: string;
-  listorderId: string[];
+  listinvoice: string[];
+  amount: number;
+  updatedAt: string;
 }
 
 const ReceiptList = () => {
-  const [invoices, setInvoices] = useState<Iinvoice[]>([]);
-  useEffect(() => {
-    const fetchCars = async () => {
-      try {
-        const response = await listInvoice();
-        setInvoices(response.data);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      }
-    };
-
-    fetchCars();
-  }, []);
-
-  const dispatch: any = useDispatch();
-
-  const selectLayoutState = (state: any) => state.Invoice;
-  const selectinvoiceProperties = createSelector(
-    selectLayoutState,
-    (state) => ({
-      invoices: state.invoices,
-      isInvoiceSuccess: state.isInvoiceSuccess,
-      error: state.error,
-    })
-  );
-
-  //delete invoice
+  const [receipts, setReceipts] = useState<IReceipt[]>([]);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [deleteModalMulti, setDeleteModalMulti] = useState<boolean>(false);
-
-  const [invoice, setInvoice] = useState<any>(null);
-
-  useEffect(() => {
-    if (invoices && !invoices.length) {
-      dispatch(onGetInvoices());
-    }
-  }, [dispatch, invoices]);
+  const [selectedReceipt, setSelectedReceipt] = useState<IReceipt | null>(null);
+  const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState<string[]>([]);
+  const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setInvoice(invoices);
-  }, [invoices]);
+    const fetchReceipts = async () => {
+      try {
+        const response = await listReceipt();
+        console.log("Fetched Receipts Data: ", response.data);
+        setReceipts(response.data || []);
+      } catch (error) {
+        setError("Error fetching receipts");
+        console.error(error);
+      }
+    };
+    fetchReceipts();
+  }, []);
 
-  // Delete Data
-  const onClickDelete = (invoice: any) => {
-    setInvoice(invoice);
+  const onClickDelete = (receipt: IReceipt) => {
+    setSelectedReceipt(receipt);
     setDeleteModal(true);
   };
 
-  const handleDeleteInvoice = () => {
-    if (invoice) {
-      dispatch(onDeleteInvoice(invoice._id));
-      setDeleteModal(false);
+  const handleDeleteReceipt = async () => {
+    if (selectedReceipt) {
+      try {
+        await deleteReceipt(selectedReceipt._id);
+        setReceipts(receipts.filter((receipt) => receipt._id !== selectedReceipt._id));
+        setDeleteModal(false);
+        toast.success("Receipt deleted successfully");
+      } catch (error) {
+        setError("Error deleting receipt");
+        console.error(error);
+      }
     }
   };
 
-  const handleValidDate = (date: any) => {
-    const date1 = moment(new Date(date)).format("DD MMM Y");
-    return date1;
-  };
-
-  const handleValidTime = (time: any) => {
-    const time1 = new Date(time);
-    const getHour = time1.getUTCHours();
-    const getMin = time1.getUTCMinutes();
-    const getTime = `${getHour}:${getMin}`;
-    var meridiem = "";
-    if (getHour >= 12) {
-      meridiem = "PM";
-    } else {
-      meridiem = "AM";
+  const deleteMultiple = async () => {
+    try {
+      await Promise.all(selectedCheckBoxDelete.map((id) => deleteReceipt(id)));
+      setReceipts(receipts.filter((receipt) => !selectedCheckBoxDelete.includes(receipt._id)));
+      setIsMultiDeleteButton(false);
+      setDeleteModalMulti(false);
+      toast.success("Selected receipts deleted successfully");
+    } catch (error) {
+      setError("Error deleting selected receipts");
+      console.error(error);
     }
-    const updateTime =
-      moment(getTime, "hh:mm").format("hh:mm") + " " + meridiem;
-    return updateTime;
   };
 
-  // Checked All
   const checkedAll = useCallback(() => {
     const checkall: any = document.getElementById("checkBoxAll");
-    const ele = document.querySelectorAll(".invoiceCheckBox");
+    const ele = document.querySelectorAll(".receiptCheckBox");
 
     if (checkall.checked) {
       ele.forEach((ele: any) => {
@@ -140,32 +101,16 @@ const ReceiptList = () => {
     deleteCheckbox();
   }, []);
 
-  // Delete Multiple
-  const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState([]);
-  const [isMultiDeleteButton, setIsMultiDeleteButton] =
-    useState<boolean>(false);
-
-  const deleteMultiple = () => {
-    const checkall: any = document.getElementById("checkBoxAll");
-    selectedCheckBoxDelete.forEach((element: any) => {
-      dispatch(onDeleteInvoice(element.value));
-      setTimeout(() => {
-        toast.clearWaitingQueue();
-      }, 3000);
-    });
-    setIsMultiDeleteButton(false);
-    checkall.checked = false;
-  };
-
   const deleteCheckbox = () => {
-    const ele: any = document.querySelectorAll(".invoiceCheckBox:checked");
-    ele.length > 0
-      ? setIsMultiDeleteButton(true)
-      : setIsMultiDeleteButton(false);
-    setSelectedCheckBoxDelete(ele);
+    const ele: any = document.querySelectorAll(".receiptCheckBox:checked");
+    const selectedIds = Array.from(ele).map((checkbox: any) => checkbox.value);
+    setSelectedCheckBoxDelete(selectedIds);
+    setIsMultiDeleteButton(selectedIds.length > 0);
   };
 
-  //Column
+  const handleValidDate = (date: any) => moment(date).format("DD MMM Y");
+  const handleValidTime = (time: any) => moment(time).format("hh:mm A");
+
   const columns = useMemo(
     () => [
       {
@@ -177,16 +122,14 @@ const ReceiptList = () => {
             onClick={() => checkedAll()}
           />
         ),
-        cell: (cell: any) => {
-          return (
-            <input
-              type="checkbox"
-              className="invoiceCheckBox form-check-input"
-              value={cell.getValue()}
-              onChange={() => deleteCheckbox()}
-            />
-          );
-        },
+        cell: (cell: any) => (
+          <input
+            type="checkbox"
+            className="receiptCheckBox form-check-input"
+            value={cell.getValue()}
+            onChange={() => deleteCheckbox()}
+          />
+        ),
         id: "#",
         accessorKey: "_id",
         enableColumnFilter: false,
@@ -194,117 +137,89 @@ const ReceiptList = () => {
       },
       {
         header: "ID",
-        accessorKey: "invoiceId",
+        accessorKey: "receiptId",
         enableColumnFilter: false,
-        cell: (cell: any) => {
-          return (
-            <Link
-              to="/apps-invoices-details"
-              className="fw-medium link-primary"
-            >
-              {cell.getValue()}
-            </Link>
-          );
-        },
+        cell: (cell: any) => (
+          <Link to={`/receipt/${cell.getValue()}`} className="fw-medium link-primary">
+            {cell.getValue()}
+          </Link>
+        ),
       },
       {
-        header: "ลูกค้า",
+        header: "Customer",
         accessorKey: "customer",
         enableColumnFilter: false,
       },
       {
-        header: "วันที่",
+        header: "Date",
         accessorKey: "updatedAt",
         enableColumnFilter: false,
-        cell: (cell: any) => (
-          <>
-            {handleValidDate(cell.getValue())},{" "}
-            <small className="text-muted">
-              {handleValidTime(cell.getValue())}
-            </small>
-          </>
-        ),
+        cell: (cell: any) => {
+          const dateValue = cell.getValue();
+          return (
+            <>
+              {handleValidDate(dateValue)}, <small className="text-muted">{handleValidTime(dateValue)}</small>
+            </>
+          );
+        },
       },
       {
-        header: "ยอดรวม",
+        header: "Amount",
         accessorKey: "amount",
         enableColumnFilter: false,
       },
       {
         header: "Action",
-        cell: (cellProps: any) => {
-          return (
-            <UncontrolledDropdown>
-              <DropdownToggle
+        cell: (cellProps: any) => (
+          <UncontrolledDropdown>
+            <DropdownToggle href="#" className="btn btn-soft-secondary btn-sm dropdown" tag="button">
+              <i className="ri-more-fill align-middle"></i>
+            </DropdownToggle>
+            <DropdownMenu className="dropdown-menu-end">
+              <DropdownItem href={`/receipt/${cellProps.row.original._id}`}>
+                <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
+              </DropdownItem>
+              <DropdownItem href={`/receipt/edit/${cellProps.row.original._id}`}>
+                <i className="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit
+              </DropdownItem>
+              <DropdownItem divider />
+              <DropdownItem
                 href="#"
-                className="btn btn-soft-secondary btn-sm dropdown"
-                tag="button"
+                onClick={() => onClickDelete(cellProps.row.original)}
               >
-                <i className="ri-more-fill align-middle"></i>
-              </DropdownToggle>
-              <DropdownMenu className="dropdown-menu-end">
-                <DropdownItem href="/apps-invoices-details">
-                  <i className="ri-eye-fill align-bottom me-2 text-muted"></i>{" "}
-                  View
-                </DropdownItem>
-
-                <DropdownItem href="/apps-invoices-create">
-                  <i className="ri-pencil-fill align-bottom me-2 text-muted"></i>{" "}
-                  Edit
-                </DropdownItem>
-
-                <DropdownItem href="/#">
-                  <i className="ri-download-2-line align-bottom me-2 text-muted"></i>{" "}
-                  Download
-                </DropdownItem>
-
-                <DropdownItem divider />
-
-                <DropdownItem
-                  href="#"
-                  onClick={() => {
-                    const invoiceData = cellProps.row.original;
-                    onClickDelete(invoiceData);
-                  }}
-                >
-                  <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i>{" "}
-                  Delete
-                </DropdownItem>
-              </DropdownMenu>
-            </UncontrolledDropdown>
-          );
-        },
+                <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete
+              </DropdownItem>
+            </DropdownMenu>
+          </UncontrolledDropdown>
+        ),
       },
     ],
     [checkedAll]
   );
 
-  document.title = "Invoice List | Velzon - React Admin & Dashboard Template";
+  document.title = "Receipt List | Velzon - React Admin & Dashboard Template";
 
   return (
     <React.Fragment>
       <div className="page-content">
         <DeleteModal
           show={deleteModal}
-          onDeleteClick={() => handleDeleteInvoice()}
+          onDeleteClick={handleDeleteReceipt}
           onCloseClick={() => setDeleteModal(false)}
         />
         <DeleteModal
           show={deleteModalMulti}
-          onDeleteClick={() => {
-            deleteMultiple();
-            setDeleteModalMulti(false);
-          }}
+          onDeleteClick={deleteMultiple}
           onCloseClick={() => setDeleteModalMulti(false)}
         />
         <Container fluid>
-          <BreadCrumb title="Invoices List" pageTitle="Invoices" />
+          <BreadCrumb title="Receipts List" pageTitle="Receipts" />
           <Row>
             <Col lg={12}>
-              <Card id="invoiceList">
+              <Card id="receiptList">
                 <CardHeader className="border-0">
                   <div className="d-flex align-items-center">
-                    <h5 className="card-title mb-0 flex-grow-1">Invoices</h5>
+                    <h5 className="card-title mb-0 flex-grow-1">Receipts</h5>
                     <div className="flex-shrink-0">
                       <div className="d-flex gap-2 flex-wrap">
                         {isMultiDeleteButton && (
@@ -315,9 +230,8 @@ const ReceiptList = () => {
                             <i className="ri-delete-bin-2-line"></i>
                           </button>
                         )}
-                        <Link to="/invoice-create" className="btn btn-danger">
-                          <i className="ri-add-line align-bottom me-1"></i>{" "}
-                          Create Invoice
+                        <Link to="/receipt-create" className="btn btn-danger">
+                          <i className="ri-add-line align-bottom me-1"></i> Create Receipt
                         </Link>
                       </div>
                     </div>
@@ -325,19 +239,15 @@ const ReceiptList = () => {
                 </CardHeader>
                 <CardBody className="pt-0">
                   <div>
-                    {/* {isInvoiceSuccess && invoices.length ? ( */}
                     <TableContainer
                       columns={columns}
-                      data={invoices || []}
+                      data={receipts || []}
                       isGlobalFilter={true}
                       customPageSize={10}
                       isInvoiceListFilter={true}
                       theadClass="text-muted text-uppercase"
                       SearchPlaceholder="Search for customer, email, country, status or something..."
                     />
-                    {/* ) : (
-                      <Loader error={error} />
-                    )} */}
                     <ToastContainer closeButton={false} limit={1} />
                   </div>
                 </CardBody>

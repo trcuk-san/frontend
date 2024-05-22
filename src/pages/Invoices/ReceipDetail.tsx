@@ -3,8 +3,19 @@ import { CardBody, Row, Col, Card, CardHeader, Container, CardFooter, Button } f
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import { useParams } from "react-router-dom";
 import { toPng } from 'html-to-image';
-import { getInvoice, getOrder } from "../../services/invoices";
+import { getReceipt, getInvoice } from "../../services/receipts";
 import logoDark from '../../assets/images/logo-dark.png';
+
+interface IReceipt {
+  _id: string;
+  receiptId: string;
+  customer: string;
+  address: string;
+  listinvoice: string[];
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface IInvoice {
   _id: string;
@@ -14,46 +25,13 @@ interface IInvoice {
   listorderId: string[];
   amount: number;
   invoicestatus: boolean;
-  createdAt: string;
   updatedAt: string;
 }
 
-interface IOrder {
-  _id: string;
-  datePickUp: string;
-  timePickUp: string;
-  dateDropOff: string;
-  timeDropOff: string;
-  vehicle: string;
-  driver: string;
-  pick_up: string;
-  drop_off: string[];
-  consumer: string;
-  income: number;
-  oilFee: number;
-  tollwayFee: number;
-  otherFee: number;
-  remark: string;
-  orderStatus: string;
-  invoiced: boolean;
-}
-
-interface IVehicle {
-  _id: string;
-  vehicleId: string;
-}
-
-interface IDriver {
-  _id: string;
-  firstname: string;
-}
-
-const InvoiceDetail = () => {
+const ReceiptDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [invoice, setInvoice] = useState<IInvoice | null>(null);
-  const [orders, setOrders] = useState<IOrder[]>([]);
-  const [vehicles, setVehicles] = useState<Record<string, IVehicle>>({});
-  const [drivers, setDrivers] = useState<Record<string, IDriver>>({});
+  const [receipt, setReceipt] = useState<IReceipt | null>(null);
+  const [invoices, setInvoices] = useState<IInvoice[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,37 +42,23 @@ const InvoiceDetail = () => {
           throw new Error("No token found");
         }
 
-        const [invoiceResponse, vehicleResponse, driverResponse] = await Promise.all([
-          fetch(`http://localhost:4000/invoice/getInvoice/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`http://localhost:4000/vehicle/listVehicle`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`http://localhost:4000/auth/users`, { headers: { Authorization: `Bearer ${token}` } })
+        const [receiptResponse, invoiceResponse] = await Promise.all([
+          fetch(`http://localhost:4000/receipt/getReceipt/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`http://localhost:4000/invoice/listInvoice`, { headers: { Authorization: `Bearer ${token}` } }),
         ]);
 
-        if (!invoiceResponse.ok || !vehicleResponse.ok || !driverResponse.ok) {
+        if (!receiptResponse.ok || !invoiceResponse.ok) {
           throw new Error("Failed to fetch data");
         }
 
-        const invoiceData = await invoiceResponse.json();
-        const vehiclesData = await vehicleResponse.json();
-        const driversData = await driverResponse.json();
+        const receiptData = await receiptResponse.json();
+        const invoicesData = await invoiceResponse.json();
 
-        setInvoice(invoiceData.data);
+        setReceipt(receiptData.data);
 
-        const vehiclesMap: Record<string, IVehicle> = {};
-        vehiclesData.data.forEach((vehicle: IVehicle) => {
-          vehiclesMap[vehicle._id] = vehicle;
-        });
-        setVehicles(vehiclesMap);
-
-        const driversMap: Record<string, IDriver> = {};
-        driversData.data.forEach((driver: IDriver) => {
-          driversMap[driver._id] = driver;
-        });
-        setDrivers(driversMap);
-
-        const orderPromises = invoiceData.data.listorderId.map((orderId: string) => getOrder(orderId));
-        const ordersData = await Promise.all(orderPromises);
-        setOrders(ordersData.filter(order => order !== null) as IOrder[]);
+        const invoicePromises = receiptData.data.listinvoice.map((invoiceId: string) => getInvoice(invoiceId));
+        const invoicesList = await Promise.all(invoicePromises);
+        setInvoices(invoicesList.filter(invoice => invoice !== null) as IInvoice[]);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Error fetching data");
@@ -108,7 +72,7 @@ const InvoiceDetail = () => {
     return <div>{error}</div>;
   }
 
-  if (!invoice) {
+  if (!receipt) {
     return <div>Loading...</div>;
   }
 
@@ -130,10 +94,8 @@ const InvoiceDetail = () => {
     return date.toLocaleDateString('en-GB', options);
   };
 
-  
-
   const handleDownload = () => {
-    const node = document.getElementById('invoiceDetails');
+    const node = document.getElementById('receiptDetails');
 
     if (node) {
       const printButton = document.getElementById('printButton');
@@ -146,7 +108,7 @@ const InvoiceDetail = () => {
       toPng(node)
         .then((dataUrl) => {
           const link = document.createElement('a');
-          link.download = `invoice_${invoice.invoiceId}.png`;
+          link.download = `receipt_${receipt.receiptId}.png`;
           link.href = dataUrl;
           link.click();
         })
@@ -162,13 +124,6 @@ const InvoiceDetail = () => {
     }
   };
 
-  const formatDropOff = (dropOff: string[]) => {
-    return dropOff.map((location, index) => {
-      const address = location.split(",").slice(0, -2).join(",");
-      return `${index + 1}. ${address}`;
-    }).join(", ");
-  };
-
   return (
     <div className="page-content">
       <style>
@@ -181,10 +136,10 @@ const InvoiceDetail = () => {
         `}
       </style>
       <Container fluid>
-        <BreadCrumb title="Invoice Details" pageTitle="Invoices" />
+        <BreadCrumb title="Receipt Details" pageTitle="Receipts" />
         <Row className="justify-content-center">
           <Col xxl={9}>
-            <Card id="invoiceDetails">
+            <Card id="receiptDetails">
               <Row>
                 <Col lg={12}>
                   <CardHeader className="border-bottom p-4">
@@ -193,7 +148,7 @@ const InvoiceDetail = () => {
                         <img src={logoDark} alt="logo dark" height="100" />
                       </div>
                       <div className="text-end">
-                        <h4 className="card-title mb-0">Invoice</h4>
+                        <h4 className="card-title mb-0">Receipt</h4>
                       </div>
                     </div>
                   </CardHeader>
@@ -204,17 +159,17 @@ const InvoiceDetail = () => {
                       <Col lg={6}>
                         <div className="d-flex flex-column">
                           <span className="text-muted text-uppercase fw-semibold">Customer:</span>
-                          <span className="fs-14 mb-2">{invoice.customer}</span>
+                          <span className="fs-14 mb-2">{receipt.customer}</span>
                           <span className="text-muted text-uppercase fw-semibold">Address:</span>
-                          <span className="fs-14 mb-2">{invoice.address}</span>
+                          <span className="fs-14 mb-2">{receipt.address}</span>
                         </div>
                       </Col>
                       <Col lg={6} className="text-end">
                         <div className="d-flex flex-column align-items-end">
-                          <span className="text-muted text-uppercase fw-semibold">Invoice ID:</span>
-                          <span className="fs-14 mb-2">{invoice.invoiceId}</span>
+                          <span className="text-muted text-uppercase fw-semibold">Receipt ID:</span>
+                          <span className="fs-14 mb-2">{receipt.receiptId}</span>
                           <span className="text-muted text-uppercase fw-semibold">Date:</span>
-                          <span className="fs-14 mb-2">{formatDate(invoice.createdAt)}</span>
+                          <span className="fs-14 mb-2">{formatDate(receipt.createdAt)}</span>
                         </div>
                       </Col>
                     </Row>
@@ -224,28 +179,24 @@ const InvoiceDetail = () => {
                           <table className="table table-bordered table-centered">
                             <thead className="table-light">
                               <tr>
+                                <th>Invoice ID</th>
                                 <th>Date</th>
-                                <th>Pickup</th>
-                                <th>Drop Off</th>
-                                <th>Vehicle</th>
-                                <th>Driver</th>
+                                <th>Customer</th>
                                 <th>Amount</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {orders.map((order, index) => (
-                                order ? (
+                              {invoices.map((invoice, index) => (
+                                invoice ? (
                                   <tr key={index}>
-                                    <td>{formatDate(order.datePickUp)}</td>
-                                    <td>{order.pick_up}</td>
-                                    <td>{formatDropOff(order.drop_off)}</td>
-                                    <td>{vehicles[order.vehicle]?.vehicleId || 'N/A'}</td>
-                                    <td>{drivers[order.driver]?.firstname || 'N/A'}</td>
-                                    <td>{order.income}</td>
+                                    <td>{invoice.invoiceId}</td>
+                                    <td>{formatDate(invoice.updatedAt)}</td>
+                                    <td>{invoice.customer}</td>
+                                    <td>{invoice.amount}</td>
                                   </tr>
                                 ) : (
                                   <tr key={index}>
-                                    <td colSpan={6}>Order data is missing or invalid.</td>
+                                    <td colSpan={4}>Invoice data is missing or invalid.</td>
                                   </tr>
                                 )
                               ))}
@@ -259,20 +210,20 @@ const InvoiceDetail = () => {
                       <Col lg={4} className="text-end">
                         <div className="d-flex justify-content-end">
                           <h5 className="text-muted">Total:</h5>
-                          <h5 className="ms-2">{invoice.amount}</h5>
+                          <h5 className="ms-2">{receipt.amount}</h5>
                         </div>
                       </Col>
                     </Row>
                     <Row className="mt-5">
                       <Col lg={6} className="text-center">
                         <div className="d-flex flex-column align-items-center">
-                          <span className="text-muted">ผู้วางบิล</span>
+                          <span className="text-muted">Issued by</span>
                           <div style={signatureLineStyle}></div>
                         </div>
                       </Col>
                       <Col lg={6} className="text-center">
                         <div className="d-flex flex-column align-items-center">
-                          <span className="text-muted">ผู้รับเงิน</span>
+                          <span className="text-muted">Received by</span>
                           <div style={signatureLineStyle}></div>
                         </div>
                       </Col>
@@ -298,4 +249,4 @@ const InvoiceDetail = () => {
   );
 };
 
-export default InvoiceDetail;
+export default ReceiptDetail;

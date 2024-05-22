@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Dropdown, DropdownItem, DropdownMenu, DropdownToggle } from 'reactstrap';
 import { createSelector } from 'reselect';
 import { useSelector } from 'react-redux';
@@ -19,12 +19,14 @@ const ProfileDropdown = () => {
     const [email, setEmail] = useState("");
     const [idx, setIdx] = useState("");
     const [profilePicture, setProfilePicture] = useState(avatar1); // สถานะสำหรับ profile picture
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchProfile = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
                 console.error('No token found in localStorage');
+                navigate("/login");
                 return;
             }
 

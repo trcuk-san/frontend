@@ -255,6 +255,8 @@ import InvoiceCreate from "../pages/Invoices/InvoiceCreate";
 import ReceiptList from "pages/Invoices/ReceiptList";
 import MemberProfile from "pages/Authentication/ProfileView";
 import VehicleDetail from "pages/Invoices/CarDetails";
+import ReceiptCreate from "pages/Invoices/ReceiptCreate";
+import ReceiptDetail from "pages/Invoices/ReceipDetail";
 
 
 const authProtectedRoutes = [
@@ -322,15 +324,20 @@ const authProtectedRoutes = [
 
   // //Invoices
   { path: "/order", component: <Order /> },
+  { path: "/order-create", component: <OrderCreate /> },
+  { path: "/order/:id", component: <OrderDetail /> },
   { path: "/car", component: <Car /> },
+  { path: "/car-create", component: <CarCreate /> },
   { path: "/car/:id", component: <VehicleDetail /> },
   { path: "/member", component: <Member /> },
   { path: "/profile/:userId", component: <MemberProfile /> },
   { path: "/invoices", component: <Invoices /> },
-  { path: "/invoices1", component: <Invoices1 /> },
-  { path: "/apps-invoices-details", component: <InvoiceDetails /> },
-  { path: "/order-create", component: <OrderCreate /> },
-  { path: "/order/:id", component: <OrderDetail /> },
+  { path: "/invoice-create", component: <InvoiceCreate /> },
+  { path: "/invoices/:id", component: <InvoiceDetails /> },
+  { path: "/receipt", component: <ReceiptList /> },
+  { path: "/receipt-create", component: <ReceiptCreate /> },
+  { path: "/receipt/:id", component: <ReceiptDetail /> },
+
   
   // { path: "/apps-invoices-list1", component: <List /> },
 
@@ -484,9 +491,6 @@ const authProtectedRoutes = [
   },
   { path: "*", component: <Navigate to="/dashboard" /> },
 
-  { path: "/car-create", component: <CarCreate /> },
-  { path: "/invoice-create", component: <InvoiceCreate /> },
-  { path: "/receipt-list", component: <ReceiptList /> },
 
 ];
 

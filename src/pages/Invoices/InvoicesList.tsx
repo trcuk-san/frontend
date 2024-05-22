@@ -16,7 +16,6 @@ import moment from "moment";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import DeleteModal from "../../Components/Common/DeleteModal";
-import FeatherIcon from "feather-icons-react";
 import { listInvoice, deleteInvoice } from "../../services/invoices";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -45,6 +44,7 @@ const InvoicesList = () => {
     const fetchInvoices = async () => {
       try {
         const response = await listInvoice();
+        console.log("Fetched Invoices Data: ", response.data); // Add this log
         setInvoices(response.data);
       } catch (error) {
         setError("Error fetching invoices");
@@ -155,12 +155,15 @@ const InvoicesList = () => {
         header: "Date",
         accessorKey: "updatedAt",
         enableColumnFilter: false,
-        cell: (cell: any) => (
-          <>
-            {handleValidDate(cell.getValue())},{" "}
-            <small className="text-muted">{handleValidTime(cell.getValue())}</small>
-          </>
-        ),
+        cell: (cell: any) => {
+          const dateValue = cell.getValue();
+          console.log("Date Cell Value: ", dateValue); // Add this log
+          return (
+            <>
+              {handleValidDate(dateValue)}, <small className="text-muted">{handleValidTime(dateValue)}</small>
+            </>
+          );
+        },
       },
       {
         header: "Amount",
@@ -190,10 +193,10 @@ const InvoicesList = () => {
               <i className="ri-more-fill align-middle"></i>
             </DropdownToggle>
             <DropdownMenu className="dropdown-menu-end">
-              <DropdownItem href={`/invoice/${cellProps.row.original._id}`}>
+              <DropdownItem href={`/invoices/${cellProps.row.original._id}`}>
                 <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
               </DropdownItem>
-              <DropdownItem href={`/invoice/edit/${cellProps.row.original._id}`}>
+              <DropdownItem href={`/invoices/edit/${cellProps.row.original._id}`}>
                 <i className="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit
               </DropdownItem>
               <DropdownItem divider />

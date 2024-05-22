@@ -1,43 +1,72 @@
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:4000';
-interface Iinvoice {
-  customer: string,
-  address: string,
-  listorderId: string[],
+
+interface IInvoice {
+  invoiceId: string;
+  customer: string;
+  address: string;
+  listorderId: string[];
+  amount: number;
+  invoicestatus: boolean;
 }
 
-interface IUpdateinvoice {
+interface IUpdateInvoice {
   _id: string;
   customer: string,
   address: string,
   listorderId: string[],
 }
 
-export const createInvoice = async (body: Iinvoice) => {
-  const res = await axios.post('/invoice/createInvoice', body);
-  console.log('res createVehicle ', res);
+export const createInvoice = async (body: IInvoice) => {
+  const res = await axios.post(`${API_BASE_URL}/invoice/createInvoice`, body);
+  console.log('res createInvoice ', res);
   return res;
 };
 
 export const listInvoice = async () => {
-  const res = await axios.get('/invoice/listInvoice');
-  // console.log('res', res);
+  const res = await axios.get(`${API_BASE_URL}/invoice/listInvoice`);
+  console.log('Fetched Invoices:', res.data);
   return res;
 };
 
-export const getInvoice = async (vehicleId: any) => {
-  const res = await axios.get('/invoice/getInvoice', {params: {_id: vehicleId},});
+export const getInvoice = async (invoiceId: string) => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/invoice/getInvoice/${invoiceId}`);
+    console.log('Fetched Invoice:', res.data); // Log the response data
+    return res.data; // Correctly return the data
+  } catch (error) {
+    console.error('Error fetching invoice:', error); // Log the error
+    throw new Error('Failed to fetch invoice');
+  }
+};
+
+export const updateInvoice = async (body: IUpdateInvoice) => {
+  const res = await axios.put(`${API_BASE_URL}/invoice/updateInvoice`, body);
+  console.log('res updateInvoice ', res);
   return res;
 };
 
-export const updateInvoice = async (body: IUpdateinvoice) => {
-  const res = await axios.put('/invoice/updateInvoice', body);
-  console.log('res  updateVehicle ', res);
+export const deleteInvoice = async (invoiceId: string) => {
+  const res = await axios.delete(`${API_BASE_URL}/invoice/deleteInvoice/${invoiceId}`);
   return res;
 };
 
-export const deleteInvoice = async (vehicleId: any) => {
-  const res = await axios.delete('/invoice/deleteInvoice', {params: {_id: vehicleId}});
-  return res;
+export const getOrder = async (orderId: string) => {
+  try {
+    console.log(`Fetching Order with ID: ${orderId}`);
+    const res = await axios.get(`${API_BASE_URL}/order/getOrder/${orderId}`);
+    console.log('Response:', res); // Log the entire response
+    console.log('Response status:', res.status);
+    console.log('Response data:', res.data);
+    console.log('Fetched Order:', res.data); // Log the response data
+    return res.data; // Correctly return the data
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(`Error fetching order with ID ${orderId}:`, error.response?.data || error.message); // Log the error
+    } else {
+      console.error(`Error fetching order with ID ${orderId}:`, error);
+    }
+    return null; // Return null if there is an error
+  }
 };

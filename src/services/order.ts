@@ -58,6 +58,21 @@ export const updateOrder = async (body: IOrder) => {
   return res;
 };
 
+export const updateOrderInvoices = async (orderId: string, updateData: Partial<IOrder>) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No token found");
+  }
+
+  const response = await axios.put(`http://localhost:4000/order/updateOrder/${orderId}`, updateData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};
+
 export const deleteOrder = async (orderId: string) => {
   const res = await axios.delete('http://localhost:4000/order/deleteOrder', { params: { _id: orderId } });
   return res;

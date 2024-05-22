@@ -5,37 +5,28 @@ import {
   Col,
   Card,
   CardBody,
-  UncontrolledDropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
   Label,
   Input,
   Button,
+  DropdownItem,
+  DropdownMenu,
+  DropdownToggle,
+  UncontrolledDropdown,
 } from "reactstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
-import DeleteModal from "../../Components/Common/DeleteModal";
-
-// Import Icons
-import FeatherIcon from "feather-icons-react";
-
-// Redux
-import { useSelector, useDispatch } from "react-redux";
-
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { createSelector } from "reselect";
-
 import { createInvoice } from "../../services/invoices";
-import { listOrder } from "services/order";
+import { listOrder, updateOrderInvoices } from "../../services/order"; // Ensure this import is correct
+import FeatherIcon from "feather-icons-react"; // Add the missing import
 
 interface IOrder {
   _id: string;
-  date: string;
-  time: string;
+  datePickUp: string;
+  timePickUp: string;
   vehicle: string;
   driver: string;
   pick_up: string;
@@ -46,7 +37,7 @@ interface IOrder {
   tollwayFee: number;
   otherFee: number;
   remark: string;
-  updatedAt: string;
+  invoiced: boolean; // Add this field
 }
 
 const InvoiceCreate = () => {
@@ -55,7 +46,9 @@ const InvoiceCreate = () => {
   const [drivers, setDrivers] = useState<any[]>([]);
   const [customer, setCustomer] = useState("");
   const [address, setAddress] = useState("");
-  const [listorderId, setlistorderId] = useState<string[]>([]);
+  const [listorderId, setListOrderId] = useState<string[]>([]);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [isButtonVisible, setIsButtonVisible] = useState<boolean>(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,7 +67,9 @@ const InvoiceCreate = () => {
 
         if (orderResponse.ok) {
           const orderData = await orderResponse.json();
-          setOrders(orderData.data || []);
+          console.log("Fetched Orders: ", orderData);
+          const filteredOrders = orderData.data.filter((order: IOrder) => !order.invoiced);
+          setOrders(filteredOrders);
         } else {
           throw new Error("Failed to fetch orders");
         }
@@ -121,16 +116,40 @@ const InvoiceCreate = () => {
     }
   };
 
-  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleOrderSelection = (orderId: string) => {
+    setListOrderId((prevSelected) => {
+      const newSelected = prevSelected.includes(orderId)
+        ? prevSelected.filter((id) => id !== orderId)
+        : [...prevSelected, orderId];
+
+      const selectedOrders = orders.filter((order) => newSelected.includes(order._id));
+      const newTotalAmount = selectedOrders.reduce((total, order) => {
+        return total + (order.income - order.oilFee - order.tollwayFee - order.otherFee);
+      }, 0);
+      setTotalAmount(newTotalAmount);
+      setIsButtonVisible(newSelected.length > 0);
+
+      return newSelected;
+    });
+  };
+
+  const submit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     try {
       const invoiceCreate = await createInvoice({
+        invoiceId: `INV-${Date.now()}`,
         customer,
         address,
         listorderId,
+        amount: totalAmount,
+        invoicestatus: false
       });
+
+      // Update the invoiced status to true for the selected orders
+      await Promise.all(listorderId.map(orderId => updateOrderInvoices(orderId, { invoiced: true })));
+
       console.log("Invoice create successful:", invoiceCreate);
-      navigate("/car");
+      navigate("/invoices");
     } catch (error) {
       console.log(error);
     }
@@ -146,54 +165,14 @@ const InvoiceCreate = () => {
     return driver ? driver.firstname : "N/A";
   };
 
-  const dispatch: any = useDispatch();
-
-  const selectLayoutState = (state: any) => state.Invoice;
-  const selectinvoiceProperties = createSelector(
-    selectLayoutState,
-    (state) => ({
-      invoices: state.invoices,
-      isInvoiceSuccess: state.isInvoiceSuccess,
-      error: state.error,
-    })
-  );
-
-  const { invoices, isInvoiceSuccess, error } = useSelector(selectinvoiceProperties);
-
-  useEffect(() => {
-    if (invoices && !invoices.length) {
-      // Dispatch getInvoices action here if needed
-    }
-  }, [dispatch, invoices]);
-
-  useEffect(() => {
-    setInvoice(invoices);
-  }, [invoices]);
-
-  const [deleteModal, setDeleteModal] = useState<boolean>(false);
-  const [deleteModalMulti, setDeleteModalMulti] = useState<boolean>(false);
-  const [invoice, setInvoice] = useState<any>(null);
-
-  const onClickDelete = (invoice: any) => {
-    setInvoice(invoice);
-    setDeleteModal(true);
-  };
-
-  const handleDeleteInvoice = () => {
-    if (invoice) {
-      // Dispatch deleteInvoice action here if needed
-      setDeleteModal(false);
-    }
-  };
-
   const handleValidDate = (date: string) => {
     const parsedDate = moment(date);
     return parsedDate.isValid() ? parsedDate.format("DD MMM YYYY") : "Invalid date";
   };
 
-  const handleValidTime = (date: string) => {
-    const parsedDate = moment(date);
-    return parsedDate.isValid() ? parsedDate.format("hh:mm A") : "Invalid time";
+  const handleValidTime = (time: string) => {
+    const parsedTime = moment(time, "HH:mm");
+    return parsedTime.isValid() ? parsedTime.format("hh:mm A") : "Invalid time";
   };
 
   const checkedAll = useCallback(() => {
@@ -212,26 +191,10 @@ const InvoiceCreate = () => {
     deleteCheckbox();
   }, []);
 
-  const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState<string[]>([]);
-  const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
-
-  const deleteMultiple = () => {
-    const checkall = document.getElementById("checkBoxAll") as HTMLInputElement;
-    selectedCheckBoxDelete.forEach((element) => {
-      // Dispatch deleteInvoice action for each element if needed
-      setTimeout(() => {
-        toast.clearWaitingQueue();
-      }, 3000);
-    });
-    setIsMultiDeleteButton(false);
-    checkall.checked = false;
-  };
-
   const deleteCheckbox = () => {
     const checkboxes = document.querySelectorAll(".invoiceCheckBox:checked") as NodeListOf<HTMLInputElement>;
     const selectedIds = Array.from(checkboxes).map((checkbox) => checkbox.value);
-    setSelectedCheckBoxDelete(selectedIds);
-    setIsMultiDeleteButton(selectedIds.length > 0);
+    setIsButtonVisible(selectedIds.length > 0);
   };
 
   const columns = useMemo(
@@ -250,7 +213,7 @@ const InvoiceCreate = () => {
             type="checkbox"
             className="invoiceCheckBox form-check-input"
             value={cell.getValue()}
-            onChange={() => deleteCheckbox()}
+            onChange={() => handleOrderSelection(cell.getValue())}
           />
         ),
         id: "#",
@@ -266,14 +229,17 @@ const InvoiceCreate = () => {
       },
       {
         header: "วันที่",
-        accessorKey: "updatedAt",
+        accessorKey: "datePickUp",
         enableColumnFilter: false,
-        cell: (cell: any) => (
-          <>
-            {handleValidDate(cell.getValue())},{" "}
-            <small className="text-muted">{handleValidTime(cell.getValue())}</small>
-          </>
-        ),
+        cell: (cell: any) => {
+          const dateValue = cell.getValue();
+          const timeValue = cell.row.original.timePickUp;
+          return (
+            <>
+              {handleValidDate(dateValue)}, <small className="text-muted">{handleValidTime(timeValue)}</small>
+            </>
+          );
+        },
       },
       {
         header: "ลูกค้า",
@@ -328,8 +294,8 @@ const InvoiceCreate = () => {
         accessorKey: "income",
         enableColumnFilter: false,
         cell: (cell: any) => {
-          const { income, oilFee, tollwayFee, otherFee } = cell.row.original;
-          return <span>{income - oilFee - tollwayFee - otherFee}</span>;
+          const { income } = cell.row.original;
+          return <span>{income}</span>;
         },
       },
     ],
@@ -341,19 +307,6 @@ const InvoiceCreate = () => {
   return (
     <React.Fragment>
       <div className="page-content">
-        <DeleteModal
-          show={deleteModal}
-          onDeleteClick={() => handleDeleteInvoice()}
-          onCloseClick={() => setDeleteModal(false)}
-        />
-        <DeleteModal
-          show={deleteModalMulti}
-          onDeleteClick={() => {
-            deleteMultiple();
-            setDeleteModalMulti(false);
-          }}
-          onCloseClick={() => setDeleteModalMulti(false)}
-        />
         <Container fluid>
           <BreadCrumb title="Invoices List" pageTitle="Invoices" />
           <Row>
@@ -390,7 +343,7 @@ const InvoiceCreate = () => {
               </div>
             </Col>
             <Col lg={12}>
-              <Label htmlFor="vehicleId" className="form-label">
+              <Label htmlFor="orderId" className="form-label">
                 Order
               </Label>
               <Card id="invoiceList">
@@ -409,6 +362,13 @@ const InvoiceCreate = () => {
                   </div>
                 </CardBody>
               </Card>
+              {isButtonVisible && (
+                <div className="d-flex justify-content-end mt-3">
+                  <Button color="primary" onClick={submit}>
+                    Create Invoice
+                  </Button>
+                </div>
+              )}
             </Col>
           </Row>
         </Container>
