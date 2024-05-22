@@ -4,7 +4,7 @@ import { Col, Container, Form, Input, Label, Row } from "reactstrap";
 import { createVehicle } from "services/vehicle";
 import { Link, useNavigate } from "react-router-dom";
 
-const CarCreate = () => {
+const VoucherCreate = () => {
   const [vehicleId, setVehicleId] = useState("");
   const [vehicleStatus, setVehicleStatus] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -121,7 +121,7 @@ const CarCreate = () => {
                   <button
                     className="btn btn-danger"
                     onClick={() => {
-                      navigate("/car");
+                      window.history.back();
                     }}
                   >
                     Back
@@ -144,4 +144,4 @@ const CarCreate = () => {
   );
 };
 
-export default CarCreate;
+export default VoucherCreate;

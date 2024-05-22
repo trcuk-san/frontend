@@ -20,16 +20,14 @@ import {
   Label,
   Input,
 } from "reactstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import FeatherIcon from "feather-icons-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { createSelector } from "reselect";
-import { useDispatch, useSelector } from "react-redux";
-import { deleteUser, updateUser } from "services/auth";
 import DeleteModal from "Components/Common/DeleteModal";
+import { deleteUser, updateUser } from "services/auth";
 
 interface IMember {
   _id: string;
@@ -38,9 +36,11 @@ interface IMember {
   phone: string;
   email: string;
   profile_picture: string;
+  type: string; // Add this field
 }
 
 const Member: React.FC = () => {
+  const navigate = useNavigate();
   const [members, setMembers] = useState<IMember[]>([]);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [editModal, setEditModal] = useState<boolean>(false);
@@ -84,17 +84,6 @@ const Member: React.FC = () => {
     fetchMembers();
   }, []);
 
-  const dispatch: any = useDispatch();
-
-  const selectLayoutState = (state: any) => state.Invoice;
-  const selectMemberProperties = createSelector(selectLayoutState, (state) => ({
-    member: state.members,
-    isMemberSuccess: state.isMemberSuccess,
-    error: state.error,
-  }));
-
-  const { member, isMemberSuccess, error } = useSelector(selectMemberProperties);
-
   const onClickDelete = (member: IMember) => {
     setSelectedMember(member);
     setDeleteModal(true);
@@ -103,7 +92,18 @@ const Member: React.FC = () => {
   const handleDeleteMember = async () => {
     if (selectedMember) {
       try {
-        await deleteUser(selectedMember._id);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No token found');
+        }
+
+        await fetch(`http://localhost:4000/auth/users/${selectedMember._id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
         setMembers(members.filter(m => m._id !== selectedMember._id));
         setDeleteModal(false);
         toast.success("User deleted successfully");
@@ -126,14 +126,28 @@ const Member: React.FC = () => {
   const handleEditMember = async () => {
     if (selectedMember) {
       try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No token found');
+        }
+
         const updatedMember = {
           firstname: selectedMember.firstname,
           lastname: selectedMember.lastname,
           phone: selectedMember.phone,
           email: selectedMember.email,
+          type: selectedMember.type, // Ensure type is included in updates
         };
 
-        await updateUser(selectedMember._id, updatedMember);
+        await fetch(`http://localhost:4000/auth/users/${selectedMember._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(updatedMember)
+        });
+
         setMembers(members.map(m => (m._id === selectedMember._id ? { ...m, ...updatedMember } : m)));
         setEditModal(false);
         toast.success("User updated successfully");
@@ -249,6 +263,14 @@ const Member: React.FC = () => {
         },
       },
       {
+        header: "Type",
+        accessorKey: "type", // Add this column
+        enableColumnFilter: false,
+        cell: (cell: any) => {
+          return <span>{cell.getValue()}</span>;
+        },
+      },
+      {
         header: "Action",
         cell: (cellProps: any) => {
           return (
@@ -261,6 +283,9 @@ const Member: React.FC = () => {
                 <i className="ri-more-fill align-middle"></i>
               </DropdownToggle>
               <DropdownMenu className="dropdown-menu-end">
+                <DropdownItem onClick={() => navigate(`/profile/${cellProps.row.original._id}`)}>
+                  <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
+                </DropdownItem>
                 <DropdownItem onClick={() => onClickEdit(cellProps.row.original)}>
                   <i className="ri-pencil-fill align-bottom me-2 text-muted"></i>{" "}
                   Edit
@@ -281,6 +306,7 @@ const Member: React.FC = () => {
     ],
     [checkedAll]
   );
+  
 
   document.title = "Members List";
 
@@ -351,6 +377,19 @@ const Member: React.FC = () => {
                     value={selectedMember.email}
                     onChange={e => setSelectedMember({ ...selectedMember, email: e.target.value })}
                   />
+                </FormGroup>
+                <FormGroup>
+                  <Label for="type">Type</Label>
+                  <Input
+                    type="select"
+                    id="type"
+                    value={selectedMember.type}
+                    onChange={e => setSelectedMember({ ...selectedMember, type: e.target.value })}
+                  >
+                    <option value="User">User</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Owner">Owner</option>
+                  </Input>
                 </FormGroup>
               </Form>
             )}

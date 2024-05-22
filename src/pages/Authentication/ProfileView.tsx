@@ -1,25 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { isEmpty } from "lodash";
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Alert,
-  CardBody,
-  DropdownItem,
-  DropdownMenu,
-  DropdownToggle,
-  UncontrolledDropdown,
-} from "reactstrap";
-import {jwtDecode} from "jwt-decode";
-import avatar from "../../assets/images/users/avatar-1.jpg";
+import { useParams, useNavigate } from "react-router-dom";
+import { Container, Row, Col, Card, CardBody, UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem, Alert } from "reactstrap";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import FeatherIcon from "feather-icons-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import DeleteModal from "../../Components/Common/DeleteModal";
+import avatar from "../../assets/images/users/avatar-1.jpg";
 
 interface User {
   _id: string;
@@ -54,15 +42,15 @@ interface IOrder {
   invoiced: boolean;
 }
 
-interface IVehicle {
-  _id: string;
-  vehicleId: string;
-}
-
-const UserProfile = () => {
+const MemberProfile = () => {
+  const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<IOrder[]>([]);
-  const [vehicles, setVehicles] = useState<IVehicle[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
+  const [deleteModal, setDeleteModal] = useState<boolean>(false);
+  const [selectedOrder, setSelectedOrder] = useState<IOrder | null>(null);
   const [email, setEmail] = useState("admin@gmail.com");
   const [idx, setIdx] = useState("1");
   const [userName, setUserName] = useState("Admin");
@@ -73,18 +61,17 @@ const UserProfile = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("No token found in localStorage");
-        setError("No token found in localStorage");
-        return;
-      }
+    if (!userId || userId === "undefined") {
+      setError("Invalid user ID");
+      return;
+    }
 
+    const fetchMember = async () => {
       try {
-        const decoded: any = jwtDecode(token);
-        const userId = decoded.uid;
-        console.log("Decoded userId from token:", userId);
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
 
         const response = await fetch(`http://localhost:4000/auth/profile/${userId}`, {
           headers: {
@@ -93,22 +80,24 @@ const UserProfile = () => {
         });
 
         if (response.ok) {
-          const userData = await response.json();
-          console.log("Fetched user data:", JSON.stringify(userData, null, 2));
-          setUser(userData);
-          setUserName(`${userData.firstname} ${userData.lastname}`);
-          setEmail(userData.email);
-          setIdx(userData._id);
-          setPhone(userData.phone);
-          setProfilePicture(userData.profile_picture || avatar);
-          setUserType(userData.type); // Set user type
+          const memberData = await response.json();
+          if (!memberData || !memberData.firstname) {
+            throw new Error("Invalid member data structure");
+          }
+
+          setUser(memberData);
+          setUserName(`${memberData.firstname} ${memberData.lastname}`);
+          setEmail(memberData.email);
+          setIdx(memberData._id);
+          setPhone(memberData.phone);
+          setProfilePicture(memberData.profile_picture || avatar);
+          setUserType(memberData.type); // Set user type
         } else {
-          console.error("No user data in response:", response.statusText);
-          setError("No user data found");
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch member: ${response.status} ${response.statusText} - ${errorText}`);
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
-        setError("Error fetching profile");
+        setError("Error fetching member");
       }
     };
 
@@ -118,9 +107,6 @@ const UserProfile = () => {
         if (!token) {
           throw new Error("No token found");
         }
-
-        const decoded: any = jwtDecode(token);
-        const userId = decoded.uid;
 
         const response = await fetch(`http://localhost:4000/order/listOrderByDriver/${userId}`, {
           headers: {
@@ -135,7 +121,6 @@ const UserProfile = () => {
           throw new Error("Failed to fetch orders");
         }
       } catch (error) {
-        console.error("Error fetching orders:", error);
         setError("Error fetching orders");
       }
     };
@@ -160,19 +145,81 @@ const UserProfile = () => {
           throw new Error("Failed to fetch vehicles");
         }
       } catch (error) {
-        console.error("Error fetching vehicles:", error);
         setError("Error fetching vehicles");
       }
     };
 
-    fetchProfile();
+    const fetchDrivers = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch("http://localhost:4000/auth/users", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const driverData = await response.json();
+          setDrivers(driverData.data || []);
+        } else {
+          throw new Error("Failed to fetch drivers");
+        }
+      } catch (error) {
+        setError("Error fetching drivers");
+      }
+    };
+
+    fetchMember();
     fetchOrders();
     fetchVehicles();
-  }, []);
+    fetchDrivers();
+  }, [userId]);
+
+  const onClickDelete = (order: IOrder) => {
+    setSelectedOrder(order);
+    setDeleteModal(true);
+  };
+
+  const handleDeleteOrder = async () => {
+    if (selectedOrder) {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch(`http://localhost:4000/order/deleteOrder/${selectedOrder._id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          setOrders(orders.filter((order) => order._id !== selectedOrder._id));
+          setDeleteModal(false);
+          toast.success("Order deleted successfully");
+        } else {
+          throw new Error("Failed to delete order");
+        }
+      } catch (error) {
+        setError("Error deleting order");
+      }
+    }
+  };
 
   const getVehicleId = (vehicleID: string) => {
     const vehicle = vehicles.find((v) => v._id === vehicleID);
     return vehicle ? vehicle.vehicleId : "N/A";
+  };
+
+  const getDriverName = (driverID: string) => {
+    const driver = drivers.find((d) => d._id === driverID);
+    return driver ? driver.firstname : "N/A";
   };
 
   const columns = useMemo(
@@ -287,19 +334,49 @@ const UserProfile = () => {
           }
         },
       },
+      {
+        header: "Action",
+        cell: (cellProps: any) => {
+          return (
+            <UncontrolledDropdown>
+              <DropdownToggle href="#" className="btn btn-soft-secondary btn-sm dropdown" tag="button">
+                <i className="ri-more-fill align-middle"></i>
+              </DropdownToggle>
+              <DropdownMenu className="dropdown-menu-end">
+                <DropdownItem onClick={() => navigate(`/order/${cellProps.row.original._id}`)}>
+                  <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
+                </DropdownItem>
+                <DropdownItem onClick={() => onClickDelete(cellProps.row.original)}>
+                  <i className="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete
+                </DropdownItem>
+              </DropdownMenu>
+            </UncontrolledDropdown>
+          );
+        },
+      },
     ],
-    [vehicles]
+    [vehicles, drivers, navigate]
   );
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
+  document.title = "Profile | Velzon - React Admin & Dashboard Template";
 
   return (
     <React.Fragment>
       <div className="page-content mt-lg-5">
         <Container fluid>
-          <BreadCrumb title="User Profile" pageTitle="Profile" />
+          <BreadCrumb title="Member Profile" pageTitle="Members" />
           <Row>
             <Col lg="12">
-              {error && <Alert color="danger">{error}</Alert>}
-              {success && <Alert color="success">Username Updated To {userName}</Alert>}
+              {error && error ? <Alert color="danger">{error}</Alert> : null}
+              {success ? <Alert color="success">Username Updated To {userName}</Alert> : null}
 
               <Card>
                 <CardBody>
@@ -313,7 +390,7 @@ const UserProfile = () => {
                     </div>
                     <div className="flex-grow-1 align-self-center">
                       <div className="text-muted">
-                        <h5>{userName}</h5>
+                        <h5>{userName || "Admin"}</h5>
                         <p className="mb-0">Id No : #{idx}</p>
                         <p className="mb-1">Email : {email}</p>
                         <p className="mb-1">Phone : {phone}</p>
@@ -326,7 +403,7 @@ const UserProfile = () => {
             </Col>
           </Row>
 
-          <h4 className="card-title mb-4 text-center">My Orders</h4>
+          <h4 className="card-title mb-4 text-center">Order History</h4>
 
           <Card>
             <CardBody>
@@ -348,4 +425,4 @@ const UserProfile = () => {
   );
 };
 
-export default UserProfile;
+export default MemberProfile;

@@ -14,14 +14,17 @@ export interface IOrder {
   vehicle: string;
   driver: string;
   pick_up: string;
-  drop_off: string[];
+  drop_off: string[]; // Array of strings for drop off locations
   consumer: string;
-  income: string;
-  oilFee: string;
-  tollwayFee: string;
-  otherFee: string;
+  income: number;
+  oilFee: number;
+  tollwayFee: number;
+  otherFee: number;
+  orderStatus: string;
+  invoiced: boolean;
   remark: string;
 }
+
 
 export const createOrder = async (body: IOrder) => {
   try {
@@ -37,7 +40,6 @@ export const createOrder = async (body: IOrder) => {
     throw error;
   }
 };
-
 
 export const listOrder = async () => {
   const res = await axios.get('http://localhost:4000/order/listOrder');
