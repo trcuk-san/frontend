@@ -46,14 +46,10 @@ export const updateReceipt = async (id: string, data: any) => {
 };
 
 export const deleteReceipt = async (id: string) => {
-  const token = localStorage.getItem('token');
-  const response = await axios.delete(`${API_URL}/receipt/deleteReceipt/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-  return response.data;
+  const res = await axios.delete(`${API_URL}/receipt/deleteReceipt/${id}`);
+  return res;
 };
+
 
 export const getInvoice = async (id: string) => {
     const token = localStorage.getItem('token');

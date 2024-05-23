@@ -41,10 +41,8 @@ export const getInvoice = async (invoiceId: string) => {
   }
 };
 
-export const updateInvoice = async (body: IUpdateInvoice) => {
-  const res = await axios.put(`${API_BASE_URL}/invoice/updateInvoice`, body);
-  console.log('res updateInvoice ', res);
-  return res;
+export const updateInvoice = async (id: string, data: Partial<IInvoice>) => {
+  return await axios.put(`${API_BASE_URL}/invoice/updateInvoice/${id}`, data); 
 };
 
 export const deleteInvoice = async (invoiceId: string) => {

@@ -10,13 +10,21 @@ import {
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  FormGroup,
+  Label,
+  Input,
 } from "reactstrap";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import DeleteModal from "../../Components/Common/DeleteModal";
-import { listInvoice, deleteInvoice } from "../../services/invoices";
+import { listInvoice, deleteInvoice, updateInvoice } from "../../services/invoices";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -36,6 +44,7 @@ const InvoicesList = () => {
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [deleteModalMulti, setDeleteModalMulti] = useState<boolean>(false);
   const [selectedInvoice, setSelectedInvoice] = useState<IInvoice | null>(null);
+  const [editModal, setEditModal] = useState<boolean>(false);
   const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState<string[]>([]);
   const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +53,6 @@ const InvoicesList = () => {
     const fetchInvoices = async () => {
       try {
         const response = await listInvoice();
-        console.log("Fetched Invoices Data: ", response.data); // Add this log
         setInvoices(response.data);
       } catch (error) {
         setError("Error fetching invoices");
@@ -109,6 +117,25 @@ const InvoicesList = () => {
     setIsMultiDeleteButton(selectedIds.length > 0);
   };
 
+  const handleEdit = (invoice: IInvoice) => {
+    setSelectedInvoice(invoice);
+    setEditModal(true);
+  };
+
+  const handleSave = async () => {
+    if (selectedInvoice) {
+      try {
+        await updateInvoice(selectedInvoice._id, selectedInvoice); // Ensure updateInvoice accepts two arguments
+        setInvoices(invoices.map((inv) => (inv._id === selectedInvoice._id ? selectedInvoice : inv)));
+        toast.success("Invoice updated successfully");
+        setEditModal(false);
+      } catch (error) {
+        setError("Error updating invoice");
+        console.error(error);
+      }
+    }
+  };
+
   const handleValidDate = (date: any) => moment(date).format("DD MMM Y");
   const handleValidTime = (time: any) => moment(time).format("hh:mm A");
 
@@ -155,15 +182,11 @@ const InvoicesList = () => {
         header: "Date",
         accessorKey: "updatedAt",
         enableColumnFilter: false,
-        cell: (cell: any) => {
-          const dateValue = cell.getValue();
-          console.log("Date Cell Value: ", dateValue); // Add this log
-          return (
-            <>
-              {handleValidDate(dateValue)}, <small className="text-muted">{handleValidTime(dateValue)}</small>
-            </>
-          );
-        },
+        cell: (cell: any) => (
+          <>
+            {handleValidDate(cell.getValue())}, <small className="text-muted">{handleValidTime(cell.getValue())}</small>
+          </>
+        ),
       },
       {
         header: "Amount",
@@ -196,7 +219,7 @@ const InvoicesList = () => {
               <DropdownItem href={`/invoices/${cellProps.row.original._id}`}>
                 <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
               </DropdownItem>
-              <DropdownItem href={`/invoices/edit/${cellProps.row.original._id}`}>
+              <DropdownItem onClick={() => handleEdit(cellProps.row.original)}>
                 <i className="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit
               </DropdownItem>
               <DropdownItem divider />
@@ -229,6 +252,66 @@ const InvoicesList = () => {
           onDeleteClick={deleteMultiple}
           onCloseClick={() => setDeleteModalMulti(false)}
         />
+        <Modal isOpen={editModal} toggle={() => setEditModal(!editModal)}>
+          <ModalHeader toggle={() => setEditModal(!editModal)}>Edit Invoice</ModalHeader>
+          <ModalBody>
+            {selectedInvoice && (
+              <>
+                <FormGroup>
+                  <Label for="customer">Customer</Label>
+                  <Input
+                    type="text"
+                    name="customer"
+                    id="customer"
+                    value={selectedInvoice.customer}
+                    onChange={(e) => setSelectedInvoice({ ...selectedInvoice, customer: e.target.value })}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label for="address">Address</Label>
+                  <Input
+                    type="text"
+                    name="address"
+                    id="address"
+                    value={selectedInvoice.address}
+                    onChange={(e) => setSelectedInvoice({ ...selectedInvoice, address: e.target.value })}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label for="amount">Amount</Label>
+                  <Input
+                    type="number"
+                    name="amount"
+                    id="amount"
+                    value={selectedInvoice.amount}
+                    onChange={(e) => setSelectedInvoice({ ...selectedInvoice, amount: parseFloat(e.target.value) })}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label for="invoicestatus">Status</Label>
+                  <Input
+                    type="select"
+                    name="invoicestatus"
+                    id="invoicestatus"
+                    value={selectedInvoice.invoicestatus ? "Paid" : "Unpaid"}
+                    onChange={(e) => setSelectedInvoice({ ...selectedInvoice, invoicestatus: e.target.value === "Paid" })}
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                  </Input>
+                </FormGroup>
+              </>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button color="primary" onClick={handleSave}>
+              Save
+            </Button>{" "}
+            <Button color="secondary" onClick={() => setEditModal(false)}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </Modal>
         <Container fluid>
           <BreadCrumb title="Invoices List" pageTitle="Invoices" />
           <Row>
