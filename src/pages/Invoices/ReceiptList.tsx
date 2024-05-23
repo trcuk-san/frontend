@@ -10,13 +10,21 @@ import {
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  FormGroup,
+  Label,
+  Input,
 } from "reactstrap";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import BreadCrumb from "../../Components/Common/BreadCrumb";
 import TableContainer from "../../Components/Common/TableContainer";
 import DeleteModal from "../../Components/Common/DeleteModal";
-import { listReceipt, deleteReceipt } from "../../services/receipts";
+import { listReceipt, deleteReceipt, updateReceipt } from "../../services/receipts";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -34,6 +42,7 @@ const ReceiptList = () => {
   const [receipts, setReceipts] = useState<IReceipt[]>([]);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [deleteModalMulti, setDeleteModalMulti] = useState<boolean>(false);
+  const [editModal, setEditModal] = useState<boolean>(false);
   const [selectedReceipt, setSelectedReceipt] = useState<IReceipt | null>(null);
   const [selectedCheckBoxDelete, setSelectedCheckBoxDelete] = useState<string[]>([]);
   const [isMultiDeleteButton, setIsMultiDeleteButton] = useState<boolean>(false);
@@ -111,6 +120,25 @@ const ReceiptList = () => {
   const handleValidDate = (date: any) => moment(date).format("DD MMM Y");
   const handleValidTime = (time: any) => moment(time).format("hh:mm A");
 
+  const handleEdit = (receipt: IReceipt) => {
+    setSelectedReceipt(receipt);
+    setEditModal(true);
+  };
+
+  const handleSave = async () => {
+    if (selectedReceipt) {
+      try {
+        await updateReceipt(selectedReceipt._id, selectedReceipt);
+        setReceipts(receipts.map((r) => (r._id === selectedReceipt._id ? selectedReceipt : r)));
+        toast.success("Receipt updated successfully");
+        setEditModal(false);
+      } catch (error) {
+        setError("Error updating receipt");
+        console.error(error);
+      }
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -179,7 +207,7 @@ const ReceiptList = () => {
               <DropdownItem href={`/receipt/${cellProps.row.original._id}`}>
                 <i className="ri-eye-fill align-bottom me-2 text-muted"></i> View
               </DropdownItem>
-              <DropdownItem href={`/receipt/edit/${cellProps.row.original._id}`}>
+              <DropdownItem onClick={() => handleEdit(cellProps.row.original)}>
                 <i className="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit
               </DropdownItem>
               <DropdownItem divider />
@@ -212,6 +240,43 @@ const ReceiptList = () => {
           onDeleteClick={deleteMultiple}
           onCloseClick={() => setDeleteModalMulti(false)}
         />
+        <Modal isOpen={editModal} toggle={() => setEditModal(!editModal)}>
+          <ModalHeader toggle={() => setEditModal(!editModal)}>Edit Receipt</ModalHeader>
+          <ModalBody>
+            {selectedReceipt && (
+              <>
+                <FormGroup>
+                  <Label for="customer">Customer</Label>
+                  <Input
+                    type="text"
+                    name="customer"
+                    id="customer"
+                    value={selectedReceipt.customer}
+                    onChange={(e) => setSelectedReceipt({ ...selectedReceipt, customer: e.target.value })}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label for="address">Address</Label>
+                  <Input
+                    type="text"
+                    name="address"
+                    id="address"
+                    value={selectedReceipt.address}
+                    onChange={(e) => setSelectedReceipt({ ...selectedReceipt, address: e.target.value })}
+                  />
+                </FormGroup>
+              </>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button color="primary" onClick={handleSave}>
+              Save
+            </Button>{" "}
+            <Button color="secondary" onClick={() => setEditModal(false)}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </Modal>
         <Container fluid>
           <BreadCrumb title="Receipts List" pageTitle="Receipts" />
           <Row>
