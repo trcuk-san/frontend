@@ -283,7 +283,7 @@ const CarList = () => {
     [checkedAll]
   );
 
-  document.title = "Vehicle List | Velzon - React Admin & Dashboard Template";
+  document.title = "Vehicle List";
 
   return (
     <React.Fragment>

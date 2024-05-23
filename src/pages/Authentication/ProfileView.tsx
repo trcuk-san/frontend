@@ -366,7 +366,7 @@ const MemberProfile = () => {
     return <div>Loading...</div>;
   }
 
-  document.title = "Profile | Velzon - React Admin & Dashboard Template";
+  document.title = "Profile";
 
   return (
     <React.Fragment>

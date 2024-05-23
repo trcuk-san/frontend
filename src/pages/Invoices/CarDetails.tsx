@@ -174,7 +174,7 @@ const VehicleDetail = () => {
     return <div>Loading...</div>;
   }
 
-  document.title = "Vehicle Detail | Velzon - React Admin & Dashboard Template";
+  document.title = "Vehicle Detail";
 
   return (
     <React.Fragment>

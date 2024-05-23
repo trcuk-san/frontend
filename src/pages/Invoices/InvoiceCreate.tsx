@@ -302,7 +302,7 @@ const InvoiceCreate = () => {
     [checkedAll, vehicles, drivers]
   );
 
-  document.title = "Invoice Create | Velzon - React Admin & Dashboard Template";
+  document.title = "Invoice Create";
 
   return (
     <React.Fragment>

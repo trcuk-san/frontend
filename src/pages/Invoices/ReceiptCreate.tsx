@@ -182,7 +182,7 @@ const ReceiptCreate = () => {
     [checkedAll, invoices]
   );
 
-  document.title = "Receipt Create | Velzon - React Admin & Dashboard Template";
+  document.title = "Receipt Create";
 
   return (
     <React.Fragment>

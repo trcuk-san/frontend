@@ -77,3 +77,18 @@ export const deleteOrder = async (orderId: string) => {
   const res = await axios.delete('http://localhost:4000/order/deleteOrder', { params: { _id: orderId } });
   return res;
 };
+
+export const fetchFinishedOrders = async (year: string, month: string) => {
+  try {
+    const response = await axios.get(`http://localhost:4000/order/listFinishedOrders`, {
+      params: {
+        year,
+        month
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching finished orders:', error);
+    throw error;
+  }
+};

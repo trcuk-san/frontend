@@ -225,7 +225,7 @@ const ReceiptList = () => {
     [checkedAll]
   );
 
-  document.title = "Receipt List | Velzon - React Admin & Dashboard Template";
+  document.title = "Receipt List";
 
   return (
     <React.Fragment>

@@ -11,6 +11,8 @@ interface ICreateReceiptPayload {
   amount: number;
 }
 
+
+
 export const createReceipt = async (payload: ICreateReceiptPayload) => {
   try {
     const response = await axios.post(`${API_URL}/receipt/createReceipt`, payload);
@@ -22,7 +24,7 @@ export const createReceipt = async (payload: ICreateReceiptPayload) => {
 };
 
 export const listReceipt = async () => {
-  return await axios.get('/receipt/listReceipt');
+  return await axios.get('/receipt/listReceipts');
 };
 
 export const getReceipt = async (id: string) => {
@@ -61,3 +63,13 @@ export const getInvoice = async (id: string) => {
     return response.data;
   };
   
+  export const fetchReceipts = async (year: string, month: string) => {
+    try {
+      const response = await axios.get(`${API_URL}/receipt/listReceiptsByYearMonth?year=${year}&month=${month}`);
+      console.log("Fetched Receipts Data:", response.data); // Add this line for debugging
+      return response.data; // Adjusted to match the structure of the response
+    } catch (error) {
+      console.error("Error fetching receipts", error);
+      throw error;
+    }
+  };

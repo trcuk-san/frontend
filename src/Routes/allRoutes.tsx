@@ -257,6 +257,9 @@ import MemberProfile from "pages/Authentication/ProfileView";
 import VehicleDetail from "pages/Invoices/CarDetails";
 import ReceiptCreate from "pages/Invoices/ReceiptCreate";
 import ReceiptDetail from "pages/Invoices/ReceipDetail";
+import VoucherList from "pages/Invoices/VoucherList";
+import VoucherCreate from "pages/Invoices/VoucherCreate";
+import MoreDetail from "pages/Invoices/VoucherDetail";
 
 
 const authProtectedRoutes = [
@@ -337,6 +340,9 @@ const authProtectedRoutes = [
   { path: "/receipt", component: <ReceiptList /> },
   { path: "/receipt-create", component: <ReceiptCreate /> },
   { path: "/receipt/:id", component: <ReceiptDetail /> },
+  { path: "/voucher", component: <VoucherList /> },
+  { path: "/voucher-create", component: <VoucherCreate /> },
+  { path: "/voucher/:year/:month", component: <MoreDetail /> },
 
   
   // { path: "/apps-invoices-list1", component: <List /> },

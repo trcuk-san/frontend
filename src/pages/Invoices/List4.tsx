@@ -277,7 +277,7 @@ const Invoices1 = () => {
     [checkedAll]
   );
 
-  document.title = "Invoice List | Velzon - React Admin & Dashboard Template";
+  document.title = "Invoice List";
 
   return (
     <React.Fragment>
