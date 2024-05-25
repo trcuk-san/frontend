@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_APIBASEURL;
 
 
-interface ICreateReceiptPayload {
+export interface ICreateReceiptPayload {
   receiptId: string;
   customer: string;
   address: string;

@@ -17,7 +17,7 @@ const Revenue = () => {
   );
   // Inside your component
   const revenueData = useSelector(selectDashboardData);
-
+  
 
   useEffect(() => {
     setchartData(revenueData);

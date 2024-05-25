@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_APIBASEURL;
 
-interface IInvoice {
+ interface IInvoice {
   invoiceId: string;
   customer: string;
   address: string;
