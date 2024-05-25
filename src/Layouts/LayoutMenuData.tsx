@@ -92,15 +92,6 @@ const Navdata = () => {
                 e.preventDefault();
              
             }
-        },{
-            id: "history",
-            label: "history",
-            icon: "ri-history-line",
-            link: "/history",
-            click: function (e: any) {
-                e.preventDefault();
-             
-            }
         },
        
         //     id: "forms",

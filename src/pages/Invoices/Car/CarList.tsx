@@ -379,7 +379,7 @@ const CarList = () => {
                       data={vehicles}
                       isGlobalFilter={true}
                       customPageSize={10}
-                      isInvoiceListFilter={true}
+                      isInvoiceListFilter={false}
                       theadClass="text-muted text-uppercase"
                       SearchPlaceholder="Search for vehicle, status, remarks or something..."
                     />

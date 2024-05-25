@@ -309,7 +309,7 @@ const ReceiptList = () => {
                       data={receipts || []}
                       isGlobalFilter={true}
                       customPageSize={10}
-                      isInvoiceListFilter={true}
+                      isInvoiceListFilter={false}
                       theadClass="text-muted text-uppercase"
                       SearchPlaceholder="Search for customer, email, country, status or something..."
                     />

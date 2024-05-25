@@ -30,6 +30,7 @@ interface RegisterFormValues {
 const Register: React.FC = () => {
   const [passwordShow, setPasswordShow] = useState(false);
   const navigate = useNavigate();
+const API_BASE_URL = process.env.REACT_APP_APIBASEURL;
 
   const initialValues: RegisterFormValues = {
     firstname: "",
@@ -63,7 +64,7 @@ const Register: React.FC = () => {
     { setSubmitting }: FormikHelpers<RegisterFormValues>
   ) => {
     try {
-      const response = await axios.post("http://localhost:4000/auth/register", values);
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, values);
       console.log("Registration response:", response);
       const { token } = response.data || response;
       if (token) {

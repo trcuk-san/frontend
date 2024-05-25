@@ -24,7 +24,7 @@ export const createReceipt = async (payload: ICreateReceiptPayload) => {
 };
 
 export const listReceipt = async () => {
-  return await axios.get('/receipt/listReceipts');
+  return await axios.get(`${API_BASE_URL}/receipt/listReceipts`);
 };
 
 export const getReceipt = async (id: string) => {

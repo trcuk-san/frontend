@@ -239,9 +239,7 @@ const Dashboard = () => {
               </CardBody>
             </Card>
           </Col>
-        </Row>
-        <Row>
-          <Col xl={12}>
+          <Col xl={6}>
             <Card>
               <CardBody>
                 <h4>Unpaid Invoices</h4>

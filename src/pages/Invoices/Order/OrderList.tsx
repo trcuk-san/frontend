@@ -6,7 +6,6 @@ import TableContainer from "../../../Components/Common/TableContainer";
 import FeatherIcon from "feather-icons-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useDispatch } from "react-redux";
 import DeleteModal from "../../../Components/Common/DeleteModal";
 import MapModal from "../../../services/map/MapModal";
 import '@fortawesome/fontawesome-free/css/all.min.css'; // Import FontAwesome CSS
@@ -661,7 +660,7 @@ const OrderList = () => {
                         <Link to="/order-create" className="btn btn-danger">
                           <i className="ri-add-line align-bottom me-1"></i> Create Order
                         </Link>
-                        <Button color="success" onClick={fetchData}>Refresh Table</Button>
+                        {/* <Button color="success" onClick={fetchData}>Refresh Table</Button> */}
                       </div>
                     </div>
                   </div>

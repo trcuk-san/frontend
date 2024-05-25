@@ -20,6 +20,7 @@ const ProfileDropdown = () => {
     const [idx, setIdx] = useState("");
     const [profilePicture, setProfilePicture] = useState(avatar1); // สถานะสำหรับ profile picture
     const navigate = useNavigate();
+    const API_BASE_URL = process.env.REACT_APP_APIBASEURL;
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -35,7 +36,7 @@ const ProfileDropdown = () => {
                 const userId = decoded.uid;
                 console.log('Decoded userId from token:', userId);
 
-                const response = await fetch(`http://localhost:4000/auth/profile/${userId}`, {
+                const response = await fetch(`${API_BASE_URL}/auth/profile/${userId}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -89,9 +90,6 @@ const ProfileDropdown = () => {
                         <span className="text-start ms-xl-2">
                             <span className="d-none d-xl-inline-block ms-1 fw-medium user-name-text">
                                 {userName || "Admin"}
-                            </span>
-                            <span className="d-none d-xl-block ms-1 fs-12 text-muted user-name-sub-text">
-                                Founder
                             </span>
                         </span>
                     </span>

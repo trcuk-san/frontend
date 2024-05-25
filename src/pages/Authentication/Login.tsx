@@ -22,6 +22,8 @@ const Login: React.FC = () => {
   const [passwordShow, setPasswordShow] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const navigate = useNavigate();
+  const API_BASE_URL = process.env.REACT_APP_APIBASEURL;
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,7 +34,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:4000/auth/login", {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password,
       });
