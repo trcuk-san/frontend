@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:4000';
+const API_BASE_URL = process.env.REACT_APP_APIBASEURL;
 
 
 interface ICreateReceiptPayload {
@@ -15,7 +15,7 @@ interface ICreateReceiptPayload {
 
 export const createReceipt = async (payload: ICreateReceiptPayload) => {
   try {
-    const response = await axios.post(`${API_URL}/receipt/createReceipt`, payload);
+    const response = await axios.post(`${API_BASE_URL}/receipt/createReceipt`, payload);
     return response.data;
   } catch (error) {
     console.error('Error creating receipt:', error);
@@ -29,7 +29,7 @@ export const listReceipt = async () => {
 
 export const getReceipt = async (id: string) => {
   const token = localStorage.getItem('token');
-  const response = await axios.get(`${API_URL}/receipt/getReceipt/${id}`, {
+  const response = await axios.get(`${API_BASE_URL}/receipt/getReceipt/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -39,7 +39,7 @@ export const getReceipt = async (id: string) => {
 
 export const updateReceipt = async (id: string, data: any) => {
   const token = localStorage.getItem('token');
-  const response = await axios.put(`${API_URL}/receipt/updateReceipt/${id}`, data, {
+  const response = await axios.put(`${API_BASE_URL}/receipt/updateReceipt/${id}`, data, {
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -48,14 +48,14 @@ export const updateReceipt = async (id: string, data: any) => {
 };
 
 export const deleteReceipt = async (id: string) => {
-  const res = await axios.delete(`${API_URL}/receipt/deleteReceipt/${id}`);
+  const res = await axios.delete(`${API_BASE_URL}/receipt/deleteReceipt/${id}`);
   return res;
 };
 
 
 export const getInvoice = async (id: string) => {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/invoice/getInvoice/${id}`, {
+    const response = await axios.get(`${API_BASE_URL}/invoice/getInvoice/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -65,7 +65,7 @@ export const getInvoice = async (id: string) => {
   
   export const fetchReceipts = async (year: string, month: string) => {
     try {
-      const response = await axios.get(`${API_URL}/receipt/listReceiptsByYearMonth?year=${year}&month=${month}`);
+      const response = await axios.get(`${API_BASE_URL}/receipt/listReceiptsByYearMonth?year=${year}&month=${month}`);
       console.log("Fetched Receipts Data:", response.data); // Add this line for debugging
       return response.data; // Adjusted to match the structure of the response
     } catch (error) {

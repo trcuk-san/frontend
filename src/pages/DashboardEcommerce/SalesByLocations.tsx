@@ -11,9 +11,6 @@ const SalesByLocations = () => {
                     <CardHeader className="align-items-center d-flex">
                         <h4 className="card-title mb-0 flex-grow-1">Sales by Locations</h4>
                         <div className="flex-shrink-0">
-                            <button type="button" className="btn btn-soft-primary btn-sm">
-                                Export Report
-                            </button>
                         </div>
                     </CardHeader>
 
