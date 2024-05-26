@@ -75,10 +75,19 @@ const Navdata = () => {
              
             }
         },{
-            id: "invoices1",
-            label: "Invoices1",
-            icon: "ri-archive-2-line",
-            link: "/invoices1",
+            id: "receipt",
+            label: "receipt",
+            icon: "ri-file-text-line",
+            link: "/receipt",
+            click: function (e: any) {
+                e.preventDefault();
+             
+            }
+        },{
+            id: "voucher",
+            label: "voucher",
+            icon: "ri-ticket-2-line",
+            link: "/voucher",
             click: function (e: any) {
                 e.preventDefault();
              

@@ -78,7 +78,7 @@ const Header = ({  headerClass } : any) => {
                                         <img src={logoSm} alt="" height="22" />
                                     </span>
                                     <span className="logo-lg">
-                                        <img src={logoDark} alt="" height="17" />
+                                        <img src={logoDark} alt="" height="170" />
                                     </span>
                                 </Link>
 
@@ -87,7 +87,7 @@ const Header = ({  headerClass } : any) => {
                                         <img src={logoSm} alt="" height="22" />
                                     </span>
                                     <span className="logo-lg">
-                                        <img src={logoLight} alt="" height="17" />
+                                        <img src={logoLight} alt="" height="170" />
                                     </span>
                                 </Link>
                             </div>
