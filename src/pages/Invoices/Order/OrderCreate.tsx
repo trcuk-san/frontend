@@ -143,38 +143,51 @@ const OrderCreate = () => {
     setSelectedDropOffIndex(null);
   };
 
-  const handleMilkrunFetch = () => {
+  const handleMilkrunFetch = async () => {
     const waypoints = formState.drop_off.map((location) => {
       const [address, lat, lng] = location.split(',');
       return { location: `${lat},${lng}` };
     });
 
     const directionsService = new google.maps.DirectionsService();
-    const directionsRenderer = new google.maps.DirectionsRenderer();
 
-    directionsService.route(
-      {
-        origin: formState.pick_up,
-        destination: formState.pick_up,
-        waypoints: waypoints.map(waypoint => ({ location: waypoint.location, stopover: true })),
-        optimizeWaypoints: true,
-        travelMode: google.maps.TravelMode.DRIVING,
-      },
-      (response, status) => {
-        if (status === "OK" && response) { // ตรวจสอบว่า response ไม่เป็น null
-          directionsRenderer.setDirections(response);
-          console.log("Milkrun route:", response);
-          // จัดเรียง drop_offs ตามลำดับใน response
-          const orderedDropOffs = response.routes[0].waypoint_order.map(index => formState.drop_off[index]);
-          setFormState((prevState) => ({
-            ...prevState,
-            drop_off: orderedDropOffs,
-          }));
-        } else {
-          console.error("Directions request failed due to " + status);
+    return new Promise<void>((resolve, reject) => {
+      directionsService.route(
+        {
+          origin: formState.pick_up,
+          destination: '13.584851, 100.614807', // จุดสุดท้าย
+          waypoints: waypoints.map(waypoint => ({ location: waypoint.location, stopover: true })),
+          optimizeWaypoints: true,
+          travelMode: google.maps.TravelMode.DRIVING,
+        },
+        (response, status) => {
+          if (status === "OK" && response) {
+            console.log("Milkrun route:", response);
+            // จัดเรียง drop_offs ตามลำดับใน response
+            const orderedDropOffs = response.routes[0].waypoint_order.map(index => formState.drop_off[index]);
+            setFormState((prevState) => ({
+              ...prevState,
+              drop_off: orderedDropOffs,
+            }));
+            resolve();
+          } else {
+            console.error("Directions request failed due to " + status);
+            reject(new Error("Directions request failed"));
+          }
         }
-      }
-    );
+      );
+    });
+  };
+
+  const validateDateTime = () => {
+    const pickUpDateTime = new Date(`${formState.datePickUp}T${formState.timePickUp}`);
+    const dropOffDateTime = new Date(`${formState.dateDropOff}T${formState.timeDropOff}`);
+
+    if (dropOffDateTime <= pickUpDateTime) {
+      setError("เวลาส่งต้องมากกว่าเวลารับ");
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -187,13 +200,15 @@ const OrderCreate = () => {
       return;
     }
 
-    // Perform Milkrun fetch before submitting
-    await new Promise<void>((resolve) => {
-      handleMilkrunFetch();
-      setTimeout(resolve, 1000); // Wait for 1 second to ensure Milkrun fetch completes
-    });
+    // Validate date and time
+    if (!validateDateTime()) {
+      return;
+    }
 
     try {
+      // Perform Milkrun fetch before submitting
+      // await handleMilkrunFetch();
+      
       const response = await createOrder(formState);
       console.log("Order created successfully:", response);
       setSuccess("Order created successfully");
@@ -261,216 +276,214 @@ const OrderCreate = () => {
                   name="dateDropOff"
                   value={formState.dateDropOff}
                   onChange={handleChange}
-                  />
-                </div>
-              </Col>
+                />
+              </div>
+            </Col>
+            <Col md={5}>
+              <div>
+                <Label htmlFor="timeDropOff" className="form-label">
+                  เวลาที่ส่ง
+                </Label>
+                <Input
+                  type="time"
+                  className="form-control"
+                  id="timeDropOff"
+                  name="timeDropOff"
+                  value={formState.timeDropOff}
+                  onChange={handleChange}
+                />
+              </div>
+            </Col>
+            <Row>
               <Col md={5}>
-                <div>
-                  <Label htmlFor="timeDropOff" className="form-label">
-                    เวลาที่ส่ง
-                  </Label>
-                  <Input
-                    type="time"
-                    className="form-control"
-                    id="timeDropOff"
-                    name="timeDropOff"
-                    value={formState.timeDropOff}
-                    onChange={handleChange}
-                  />
-                </div>
-              </Col>
-              <Row>
-                <Col md={5}>
-                  <Label htmlFor="vehicle" className="form-label">
-                    รถ
-                  </Label>
-                  <Input
-                    type="select"
-                    className="form-select rounded-pill mb-3"
-                    aria-label="vehicle"
-                    name="vehicle"
-                    value={formState.vehicle}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select your vehicle</option>
-                    {vehicles.map((vehicle: any) => (
-                      <option key={vehicle._id} value={vehicle._id}>
-                        {vehicle.vehicleId}
-                      </option>
-                    ))}
-                  </Input>
-                </Col>
-                <Col md={5}>
-                  <Label htmlFor="driver" className="form-label">
-                    คนขับ
-                  </Label>
-                  <Input
-                    type="select"
-                    className="form-select rounded-pill mb-3"
-                    aria-label="driver"
-                    name="driver"
-                    value={formState.driver}
-                    onChange={handleChange}
-                  >
-                    <option value="">Search for driver</option>
-                    {drivers.map((driver: any) => (
-                      <option key={driver._id} value={driver._id}>
-                        {driver.firstname} {driver.lastname}
-                      </option>
-                    ))}
-                  </Input>
-                </Col>
-              </Row>
-              <Col md={5}>
-                <div>
-                  <Label htmlFor="pick_up" className="form-label">
-                    สถานที่รับสินค้า
-                  </Label>
-                  <InputGroup>
-                    <Input
-                      type="text"
-                      className="form-control"
-                      id="pick_up"
-                      name="pick_up"
-                      value={formState.pick_up}
-                      onChange={handleChange}
-                    />
-                    <InputGroupText>
-                      <i
-                        className="fa-solid fa-map-location"
-                        onClick={() => {
-                          setSelectedDropOffIndex(null);
-                          setIsMapModalOpen(true);
-                        }}
-                        style={{ cursor: 'pointer' }}
-                      ></i>
-                    </InputGroupText>
-                  </InputGroup>
-                </div>
-              </Col>
-              <Col md={5}>
-                <div style={{ position: "relative" }}>
-                  <Label htmlFor="drop_off" className="form-label">
-                    สถานที่ส่งสินค้า
-                  </Label>
-                  {formState.drop_off.map((location, index) => (
-                    <div key={index} style={{ position: "relative", marginBottom: "10px" }}>
-                      <InputGroup>
-                        <Input
-                          id={`drop_off${index}`}
-                          name={`drop_off${index}`}
-                          value={location}
-                          onChange={(e) => handleDropOffChange(e, index)}
-                          rows="1"
-                          className="form-control"
-                        />
-                        <InputGroupText>
-                          <i
-                            className="fa-solid fa-map-location"
-                            onClick={() => {
-                              setSelectedDropOffIndex(index);
-                              setIsMapModalOpen(true);
-                            }}
-                            style={{ cursor: 'pointer', marginRight: '10px' }}
-                          ></i>
-                          {index !== 0 && (
-                            <Button color="danger" className="btn btn-sm" onClick={() => handleRemoveDropOff(index)}>
-                              -
-                            </Button>
-                          )}
-                        </InputGroupText>
-                      </InputGroup>
-                    </div>
+                <Label htmlFor="vehicle" className="form-label">
+                  รถ
+                </Label>
+                <Input
+                  type="select"
+                  className="form-select rounded-pill mb-3"
+                  aria-label="vehicle"
+                  name="vehicle"
+                  value={formState.vehicle}
+                  onChange={handleChange}
+                >
+                  <option value="">Select your vehicle</option>
+                  {vehicles.map((vehicle: any) => (
+                    <option key={vehicle._id} value={vehicle._id}>
+                      {vehicle.vehicleId}
+                    </option>
                   ))}
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <Button onClick={handleAddDropOff} color="primary" className="btn btn-primary btn-sm" type="button">
-                      Add Drop Off Location
-                    </Button>
-                    <Button onClick={handleMilkrunFetch} color="success" className="btn btn-success btn-sm" type="button">
-                      Fetch
-                    </Button>
-                  </div>
-                </div>
-              </Col>
-              <Col md={10}>
-                <div>
-                  <Label htmlFor="consumer" className="form-label">
-                    ชื่อลูกค้า
-                  </Label>
-                  <Input
-                    type="text"
-                    className="form-control"
-                    id="consumer"
-                    name="consumer"
-                    value={formState.consumer}
-                    onChange={handleChange}
-                  />
-                </div>
+                </Input>
               </Col>
               <Col md={5}>
-                <div>
-                  <Label htmlFor="income" className="form-label">
-                    ราคา
-                  </Label>
-                  <Input
-                    type="number"
-                    className="form-control"
-                    id="income"
-                    name="income"
-                    value={formState.income}
-                    onChange={handleChange}
-                  />
-                </div>
-              </Col>
-
-              <Col md={5}>
-                <div>
-                  <Label htmlFor="remark" className="form-label">
-                    หมายเหตุ
-                  </Label>
-                  <Input
-                    type="text"
-                    className="form-control"
-                    id="remark"
-                    name="remark"
-                    value={formState.remark}
-                    onChange={handleChange}
-                  />
-                </div>
-              </Col>
-              <div></div>
-              <Col md={10}>
-                <div className="text-end">
-                  <Button
-                    color="danger"
-                    className="btn btn-danger"
-                    onClick={() => {
-                      window.history.back();
-                    }}
-                  >
-                    Back
-                  </Button>
-                </div>
-              </Col>
-  
-              <Col md={1}>
-                <div className="text-end">
-                  <Button color="primary" type="submit" className="btn btn-primary">
-                    Submit
-                  </Button>
-                </div>
+                <Label htmlFor="driver" className="form-label">
+                  คนขับ
+                </Label>
+                <Input
+                  type="select"
+                  className="form-select rounded-pill mb-3"
+                  aria-label="driver"
+                  name="driver"
+                  value={formState.driver}
+                  onChange={handleChange}
+                >
+                  <option value="">Search for driver</option>
+                  {drivers.map((driver: any) => (
+                    <option key={driver._id} value={driver._id}>
+                      {driver.firstname} {driver.lastname}
+                    </option>
+                  ))}
+                </Input>
               </Col>
             </Row>
-          </Form>
-        </Container>
-        <MapModal
-          isOpen={isMapModalOpen}
-          toggle={() => setIsMapModalOpen(!isMapModalOpen)}
-          onSelectLocation={(location) => handleLocationSelect(location)}
-        />
-      </div>
-    );
-  };
-  
-  export default OrderCreate;
-  
+            <Col md={5}>
+              <div>
+                <Label htmlFor="pick_up" className="form-label">
+                  สถานที่รับสินค้า
+                </Label>
+                <InputGroup>
+                  <Input
+                    type="text"
+                    className="form-control"
+                    id="pick_up"
+                    name="pick_up"
+                    value={formState.pick_up}
+                    onChange={handleChange}
+                  />
+                  <InputGroupText>
+                    <i
+                      className="fa-solid fa-map-location"
+                      onClick={() => {
+                        setSelectedDropOffIndex(null);
+                        setIsMapModalOpen(true);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    ></i>
+                  </InputGroupText>
+                </InputGroup>
+              </div>
+            </Col>
+            <Col md={5}>
+              <div style={{ position: "relative" }}>
+                <Label htmlFor="drop_off" className="form-label">
+                  สถานที่ส่งสินค้า
+                </Label>
+                {formState.drop_off.map((location, index) => (
+                  <div key={index} style={{ position: "relative", marginBottom: "10px" }}>
+                    <InputGroup>
+                      <Input
+                        id={`drop_off${index}`}
+                        name={`drop_off${index}`}
+                        value={location}
+                        onChange={(e) => handleDropOffChange(e, index)}
+                        rows="1"
+                        className="form-control"
+                      />
+                      <InputGroupText>
+                        <i
+                          className="fa-solid fa-map-location"
+                          onClick={() => {
+                            setSelectedDropOffIndex(index);
+                            setIsMapModalOpen(true);
+                          }}
+                          style={{ cursor: 'pointer', marginRight: '10px' }}
+                        ></i>
+                        {index !== 0 && (
+                          <Button color="danger" className="btn btn-sm" onClick={() => handleRemoveDropOff(index)}>
+                            -
+                          </Button>
+                        )}
+                      </InputGroupText>
+                    </InputGroup>
+                  </div>
+                ))}
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <Button onClick={handleAddDropOff} color="primary" className="btn btn-primary btn-sm" type="button">
+                    Add Drop Off Location
+                  </Button>
+                  <Button onClick={handleMilkrunFetch} color="success" className="btn btn-success btn-sm" type="button">
+                    Fetch
+                  </Button>
+                </div>
+              </div>
+            </Col>
+            <Col md={10}>
+              <div>
+                <Label htmlFor="consumer" className="form-label">
+                  ชื่อลูกค้า
+                </Label>
+                <Input
+                  type="text"
+                  className="form-control"
+                  id="consumer"
+                  name="consumer"
+                  value={formState.consumer}
+                  onChange={handleChange}
+                />
+              </div>
+            </Col>
+            <Col md={5}>
+              <div>
+                <Label htmlFor="income" className="form-label">
+                  ราคา
+                </Label>
+                <Input
+                  type="number"
+                  className="form-control"
+                  id="income"
+                  name="income"
+                  value={formState.income}
+                  onChange={handleChange}
+                />
+              </div>
+            </Col>
+
+            <Col md={5}>
+              <div>
+                <Label htmlFor="remark" className="form-label">
+                  หมายเหตุ
+                </Label>
+                <Input
+                  type="text"
+                  className="form-control"
+                  id="remark"
+                  name="remark"
+                  value={formState.remark}
+                  onChange={handleChange}
+                />
+              </div>
+            </Col>
+            <div></div>
+            <Col md={10}>
+              <div className="text-end">
+                <Button
+                  color="danger"
+                  className="btn btn-danger"
+                  onClick={() => {
+                    window.history.back();
+                  }}
+                >
+                  Back
+                  </Button>
+              </div>
+            </Col>
+            <Col md={1}>
+              <div className="text-end">
+                <Button color="primary" type="submit" className="btn btn-primary">
+                  Submit
+                </Button>
+              </div>
+            </Col>
+          </Row>
+        </Form>
+      </Container>
+      <MapModal
+        isOpen={isMapModalOpen}
+        toggle={() => setIsMapModalOpen(!isMapModalOpen)}
+        onSelectLocation={(location) => handleLocationSelect(location)}
+      />
+    </div>
+  );
+};
+
+export default OrderCreate;

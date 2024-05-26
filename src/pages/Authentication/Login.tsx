@@ -47,7 +47,7 @@ const Login: React.FC = () => {
           "Token saved to localStorage:",
           localStorage.getItem("token")
         ); // เพิ่ม log เพื่อตรวจสอบ token ใน localStorage
-        navigate("/profile");
+        navigate("/dashboard");
       } else {
         setErrors({ email: "Invalid email or password" });
         console.error("No token in response:", response.data);
