@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Dropdown, DropdownItem, DropdownMenu, DropdownToggle } from 'reactstrap';
 import { createSelector } from 'reselect';
 import { useSelector } from 'react-redux';
@@ -19,12 +19,15 @@ const ProfileDropdown = () => {
     const [email, setEmail] = useState("");
     const [idx, setIdx] = useState("");
     const [profilePicture, setProfilePicture] = useState(avatar1); // สถานะสำหรับ profile picture
+    const navigate = useNavigate();
+    const API_BASE_URL = process.env.REACT_APP_APIBASEURL;
 
     useEffect(() => {
         const fetchProfile = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
                 console.error('No token found in localStorage');
+                navigate("/login");
                 return;
             }
 
@@ -33,7 +36,7 @@ const ProfileDropdown = () => {
                 const userId = decoded.uid;
                 console.log('Decoded userId from token:', userId);
 
-                const response = await fetch(`http://localhost:4000/auth/profile/${userId}`, {
+                const response = await fetch(`${API_BASE_URL}/auth/profile/${userId}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -87,9 +90,6 @@ const ProfileDropdown = () => {
                         <span className="text-start ms-xl-2">
                             <span className="d-none d-xl-inline-block ms-1 fw-medium user-name-text">
                                 {userName || "Admin"}
-                            </span>
-                            <span className="d-none d-xl-block ms-1 fs-12 text-muted user-name-sub-text">
-                                Founder
                             </span>
                         </span>
                     </span>

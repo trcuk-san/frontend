@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:4000';
+const API_BASE_URL = process.env.REACT_APP_APIBASEURL;
 
 export const setAuthorization = (token: string) => {
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -42,23 +42,53 @@ export const createOrder = async (body: IOrder) => {
 };
 
 export const listOrder = async () => {
-  const res = await axios.get('http://localhost:4000/order/listOrder');
+  const res = await axios.get(`${API_BASE_URL}/order/listOrder`);
   console.log('res', res);
   return res;
 };
 
 export const getOrder = async (orderId: string) => {
-  const res = await axios.get('http://localhost:4000/order/getOrder', { params: { _id: orderId } });
+  const res = await axios.get(`${API_BASE_URL}/order/getOrder`, { params: { _id: orderId } });
   return res;
 };
 
 export const updateOrder = async (body: IOrder) => {
-  const res = await axios.put('http://localhost:4000/order/updateOrder', body);
+  const res = await axios.put(`${API_BASE_URL}/order/updateOrder`, body);
   console.log('res updateOrder ', res);
   return res;
 };
 
+export const updateOrderInvoices = async (orderId: string, updateData: Partial<IOrder>) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No token found");
+  }
+
+  const response = await axios.put(`${API_BASE_URL}/order/updateOrder/${orderId}`, updateData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};
+
 export const deleteOrder = async (orderId: string) => {
-  const res = await axios.delete('http://localhost:4000/order/deleteOrder', { params: { _id: orderId } });
+  const res = await axios.delete(`${API_BASE_URL}/order/deleteOrder`, { params: { _id: orderId } });
   return res;
+};
+
+export const fetchFinishedOrders = async (year: string, month: string) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/order/listFinishedOrders`, {
+      params: {
+        year,
+        month
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching finished orders:', error);
+    throw error;
+  }
 };

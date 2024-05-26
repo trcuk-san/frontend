@@ -78,7 +78,7 @@ const Navdata = () => {
             id: "receipt",
             label: "receipt",
             icon: "ri-file-text-line",
-            link: "/apps-invoices-create",
+            link: "/receipt",
             click: function (e: any) {
                 e.preventDefault();
              
@@ -87,16 +87,7 @@ const Navdata = () => {
             id: "voucher",
             label: "voucher",
             icon: "ri-ticket-2-line",
-            link: "/apps-invoices-create",
-            click: function (e: any) {
-                e.preventDefault();
-             
-            }
-        },{
-            id: "history",
-            label: "history",
-            icon: "ri-history-line",
-            link: "/apps-invoices-create",
+            link: "/voucher",
             click: function (e: any) {
                 e.preventDefault();
              

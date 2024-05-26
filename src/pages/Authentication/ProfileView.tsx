@@ -59,6 +59,7 @@ const MemberProfile = () => {
   const [userType, setUserType] = useState("User"); // New state for user type
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const API_BASE_URL = process.env.REACT_APP_APIBASEURL;
 
   useEffect(() => {
     if (!userId || userId === "undefined") {
@@ -73,7 +74,7 @@ const MemberProfile = () => {
           throw new Error("No token found");
         }
 
-        const response = await fetch(`http://localhost:4000/auth/profile/${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/auth/profile/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -108,7 +109,7 @@ const MemberProfile = () => {
           throw new Error("No token found");
         }
 
-        const response = await fetch(`http://localhost:4000/order/listOrderByDriver/${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/listOrderByDriver/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -132,7 +133,7 @@ const MemberProfile = () => {
           throw new Error("No token found");
         }
 
-        const response = await fetch("http://localhost:4000/vehicle/listVehicle", {
+        const response = await fetch(`${API_BASE_URL}/vehicle/listVehicle`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -156,7 +157,7 @@ const MemberProfile = () => {
           throw new Error("No token found");
         }
 
-        const response = await fetch("http://localhost:4000/auth/users", {
+        const response = await fetch(`${API_BASE_URL}/auth/users`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -192,7 +193,7 @@ const MemberProfile = () => {
           throw new Error("No token found");
         }
 
-        const response = await fetch(`http://localhost:4000/order/deleteOrder/${selectedOrder._id}`, {
+        const response = await fetch(`${API_BASE_URL}/order/deleteOrder/${selectedOrder._id}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -366,7 +367,7 @@ const MemberProfile = () => {
     return <div>Loading...</div>;
   }
 
-  document.title = "Profile | Velzon - React Admin & Dashboard Template";
+  document.title = "Profile";
 
   return (
     <React.Fragment>
