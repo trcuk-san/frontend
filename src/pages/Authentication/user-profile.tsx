@@ -318,7 +318,7 @@ const UserProfile = () => {
                         <p className="mb-0">Id No : #{idx}</p>
                         <p className="mb-1">Email : {email}</p>
                         <p className="mb-1">Phone : {phone}</p>
-                        <p className="mb-1">Type : {userType}</p> {/* Display user type */}
+                        {/* <p className="mb-1">Type : {userType}</p> */}
                       </div>
                     </div>
                   </div>

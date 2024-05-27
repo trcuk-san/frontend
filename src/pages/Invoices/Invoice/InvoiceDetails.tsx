@@ -267,13 +267,13 @@ const InvoiceDetail = () => {
                     <Row className="mt-5">
                       <Col lg={6} className="text-center">
                         <div className="d-flex flex-column align-items-center">
-                          <span className="text-muted">ผู้วางบิล</span>
+                          <span className="text-muted">Issued by</span>
                           <div style={signatureLineStyle}></div>
                         </div>
                       </Col>
                       <Col lg={6} className="text-center">
                         <div className="d-flex flex-column align-items-center">
-                          <span className="text-muted">ผู้รับเงิน</span>
+                          <span className="text-muted">Received by</span>
                           <div style={signatureLineStyle}></div>
                         </div>
                       </Col>

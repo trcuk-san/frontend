@@ -93,8 +93,8 @@ const CarCreate = () => {
                   onChange={handleChange}
                 >
                   <option>Select Vehicle Status</option>
-                  <option defaultValue="Ok">Ok</option>
-                  <option defaultValue="notOK">notOK</option>
+                  <option defaultValue="available">available</option>
+                  <option defaultValue="unavailable">unavailable</option>
                 </select>
               </Col>
               <Col md={12}>

@@ -109,7 +109,7 @@ const MemberProfile = () => {
           throw new Error("No token found");
         }
 
-        const response = await fetch(`${API_BASE_URL}/listOrderByDriver/${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/order/listOrderByDriver/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -395,7 +395,7 @@ const MemberProfile = () => {
                         <p className="mb-0">Id No : #{idx}</p>
                         <p className="mb-1">Email : {email}</p>
                         <p className="mb-1">Phone : {phone}</p>
-                        <p className="mb-1">Type : {userType}</p> {/* Display user type */}
+                        <p className="mb-1">Type : {userType}</p>
                       </div>
                     </div>
                   </div>
